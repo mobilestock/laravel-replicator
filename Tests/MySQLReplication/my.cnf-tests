@@ -1,0 +1,5 @@
+[mysqld]
+log-bin=mysql-bin
+server-id=1
+binlog-format=row
+max_allowed_packet=64M
