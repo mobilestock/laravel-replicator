@@ -9,7 +9,7 @@ use MySQLReplication\Event\DTO\WriteRowsDTO;
 
 class ChangedColumns
 {
-    public static function getChangedColumns(EventDTO $event): array
+    public static function checkChangedColumns(EventDTO $event, array $configuredColumns): bool
     {
         $changedColumns = [];
 
@@ -33,6 +33,10 @@ class ChangedColumns
             }
         }
 
-        return $changedColumns;
+        if (empty(array_intersect($configuredColumns, $changedColumns))) {
+            return false;
+        }
+
+        return true;
     }
 }

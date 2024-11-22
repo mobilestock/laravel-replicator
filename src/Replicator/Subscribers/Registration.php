@@ -55,11 +55,7 @@ class Registration extends EventSubscribers
                     $columnMappings = array_flip($config['columns']);
                 }
 
-                $configuredColumns = array_keys($columnMappings);
-
-                $changedColumns = ChangedColumns::getChangedColumns($event);
-
-                if (empty(array_intersect($configuredColumns, $changedColumns))) {
+                if (!ChangedColumns::checkChangedColumns($event, array_keys($columnMappings))) {
                     continue;
                 }
 
