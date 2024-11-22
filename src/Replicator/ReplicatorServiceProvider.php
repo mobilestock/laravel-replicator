@@ -11,6 +11,6 @@ class ReplicatorServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__ . '/../../config/replicator-connection.php', 'database.connections.replicator');
 
-        $this->commands([StartReplicationCommand::class]);
+        $this->commands(StartReplicationCommand::class);
     }
 }
