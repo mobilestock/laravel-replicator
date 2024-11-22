@@ -23,10 +23,8 @@ class ReplicationConfigManager
         $tables = [];
 
         foreach ($this->configurations as $config) {
-            $databases[] = $config['node_primary']['database'] ?? env('DB_DATABASE');
-            $databases[] = $config['node_secondary']['database'];
-            $tables[] = $config['node_primary']['table'];
-            $tables[] = $config['node_secondary']['table'];
+            $databases = [$config['node_primary']['database'], $config['node_secondary']['database']];
+            $tables = array_merge($tables, [$config['node_primary']['table'], $config['node_secondary']['table']]);
         }
 
         $this->databases = array_unique($databases);
