@@ -2,12 +2,12 @@
 
 namespace MobileStock\LaravelReplicator\Subscribers;
 
+use Illuminate\Support\Facades\App;
 use MobileStock\LaravelReplicator\Database\DatabaseService;
 use MobileStock\LaravelReplicator\Handlers\DeleteHandler;
 use MobileStock\LaravelReplicator\Handlers\InsertHandler;
 use MobileStock\LaravelReplicator\Handlers\UpdateHandler;
 use MobileStock\LaravelReplicator\Helpers\ChangedColumns;
-use MobileStock\LaravelReplicator\Interceptor\InterceptorManager;
 use MySQLReplication\Event\DTO\DeleteRowsDTO;
 use MySQLReplication\Event\DTO\EventDTO;
 use MySQLReplication\Event\DTO\UpdateRowsDTO;
@@ -74,12 +74,11 @@ class Registration extends EventSubscribers
                     switch ($event::class) {
                         case UpdateRowsDTO::class:
                             if ($interceptorFunction) {
-                                $row['after'] = InterceptorManager::applyInterceptor(
-                                    $interceptorFunction,
-                                    $row['after'],
-                                    $nodePrimaryTable,
-                                    $nodePrimaryDatabase
-                                );
+                                $row['after'] = App::call($interceptorFunction, [
+                                    'data' => $row['after'],
+                                    'nodePrimaryTable' => $nodePrimaryTable,
+                                    'nodePrimaryDatabase' => $nodePrimaryDatabase,
+                                ]);
                             }
 
                             UpdateHandler::handle(
@@ -94,12 +93,11 @@ class Registration extends EventSubscribers
 
                         case WriteRowsDTO::class:
                             if ($interceptorFunction) {
-                                $row = InterceptorManager::applyInterceptor(
-                                    $interceptorFunction,
-                                    $row,
-                                    $nodePrimaryTable,
-                                    $nodePrimaryDatabase
-                                );
+                                $row = App::call($interceptorFunction, [
+                                    'data' => $row,
+                                    'nodePrimaryTable' => $nodePrimaryTable,
+                                    'nodePrimaryDatabase' => $nodePrimaryDatabase,
+                                ]);
                             }
 
                             InsertHandler::handle($nodeSecondaryDatabase, $nodeSecondaryTable, $columnMappings, $row);
@@ -107,12 +105,11 @@ class Registration extends EventSubscribers
 
                         case DeleteRowsDTO::class:
                             if ($interceptorFunction) {
-                                $row = InterceptorManager::applyInterceptor(
-                                    $interceptorFunction,
-                                    $row,
-                                    $nodePrimaryTable,
-                                    $nodePrimaryDatabase
-                                );
+                                $row = App::call($interceptorFunction, [
+                                    'data' => $row,
+                                    'nodePrimaryTable' => $nodePrimaryTable,
+                                    'nodePrimaryDatabase' => $nodePrimaryDatabase,
+                                ]);
                             }
 
                             DeleteHandler::handle(
