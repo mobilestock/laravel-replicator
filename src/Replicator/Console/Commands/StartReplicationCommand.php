@@ -2,6 +2,7 @@
 
 namespace MobileStock\LaravelReplicator\Console\Commands;
 
+use Config;
 use Illuminate\Console\Command;
 use MobileStock\LaravelReplicator\Config\ReplicationConfigManager;
 use MobileStock\LaravelReplicator\Database\DatabaseService;
@@ -24,10 +25,10 @@ class StartReplicationCommand extends Command
         $tables = $configManager->getTables();
 
         $builder = (new ConfigBuilder())
-            ->withHost(env('DB_HOST'))
-            ->withPort(env('DB_PORT'))
-            ->withUser(env('REPLICATOR_DB_USERNAME'))
-            ->withPassword(env('REPLICATOR_DB_PASSWORD'))
+            ->withHost(Config::get('database.connections.replicator.host'))
+            ->withPort(Config::get('database.connections.replicator.port'))
+            ->withUser(Config::get('database.connections.replicator.username'))
+            ->withPassword(Config::get('database.connections.replicator.password'))
             ->withEventsOnly([
                 ConstEventType::UPDATE_ROWS_EVENT_V1,
                 ConstEventType::WRITE_ROWS_EVENT_V1,

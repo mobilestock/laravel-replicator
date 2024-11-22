@@ -8,12 +8,11 @@ use MySQLReplication\Event\Event;
 class DatabaseService
 {
     protected string $replicateTag;
-    protected string $replicatorDb;
 
     public function __construct()
     {
         $this->replicateTag = Event::REPLICATION_QUERY;
-        $this->replicatorDb = env('REPLICATOR_DB');
+        DB::setDefaultConnection('replicator-bridge');
     }
 
     public function update(string $database, string $table, string $clausule, string $referenceKey, array $binds): void
@@ -40,7 +39,8 @@ class DatabaseService
 
     public function getLastBinlogPosition(): ?array
     {
-        $lastBinlogChange = DB::selectOne("SELECT json_binlog FROM {$this->replicatorDb}.settings");
+        DB::setDefaultConnection('replicator');
+        $lastBinlogChange = DB::selectOne('SELECT settings.json_binlog FROM settings');
         if ($lastBinlogChange) {
             return json_decode($lastBinlogChange->json_binlog, true);
         }
@@ -49,8 +49,9 @@ class DatabaseService
 
     public function updateBinlogPosition(string $fileName, int $position): void
     {
+        DB::setDefaultConnection('replicator');
         $jsonBinlog = json_encode(['file' => $fileName, 'position' => $position]);
-        DB::update("UPDATE {$this->replicatorDb}.settings SET json_binlog = :json_binlog WHERE true;", [
+        DB::update('UPDATE settings SET settings.json_binlog = :json_binlog WHERE true;', [
             'json_binlog' => $jsonBinlog,
         ]);
     }
