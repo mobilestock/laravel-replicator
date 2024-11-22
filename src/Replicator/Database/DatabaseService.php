@@ -41,10 +41,7 @@ class DatabaseService
     {
         DB::setDefaultConnection('replicator');
         $lastBinlogChange = DB::selectOne('SELECT settings.json_binlog FROM settings');
-        if ($lastBinlogChange) {
-            return json_decode($lastBinlogChange->json_binlog, true);
-        }
-        return null;
+        return json_decode($lastBinlogChange->json_binlog, true);
     }
 
     public function updateBinlogPosition(string $fileName, int $position): void
