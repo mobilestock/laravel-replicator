@@ -43,7 +43,7 @@ test('should return changed columns on update', function () {
         ],
     ]);
 
-    $changedColumns = ChangedColumns::getChangedColumns($event);
+    $changedColumns = ChangedColumns::checkChangedColumns($event);
 
     expect($changedColumns)->toEqual(['nome']);
 });
@@ -75,7 +75,7 @@ test('should return all columns on write', function () {
 
     $event = new WriteRowsDTO($eventInfo, $tableMap, 1, [['name' => 'John Doe', 'email' => 'john.doe@example.com']]);
 
-    $changedColumns = ChangedColumns::getChangedColumns($event);
+    $changedColumns = ChangedColumns::checkChangedColumns($event);
 
     expect($changedColumns)->toEqual(['name', 'email']);
 });
@@ -109,7 +109,7 @@ test('should return columns on delete with before values', function () {
         'before' => ['nome' => 'John Doe', 'email' => 'john.doe@example.com'],
     ]);
 
-    $changedColumns = ChangedColumns::getChangedColumns($event);
+    $changedColumns = ChangedColumns::checkChangedColumns($event);
 
     expect($changedColumns)->toEqual(['nome', 'email']);
 });
@@ -141,7 +141,7 @@ test('should return empty array when no changes on delete without values', funct
 
     $event = new DeleteRowsDTO($eventInfo, $tableMap, 1, []);
 
-    $changedColumns = ChangedColumns::getChangedColumns($event);
+    $changedColumns = ChangedColumns::checkChangedColumns($event);
 
     expect($changedColumns)->toEqual([]);
 });

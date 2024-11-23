@@ -174,7 +174,7 @@ it('should process UpdateRowsDTO event correctly', function () {
 
     $changedColumnsMock = Mockery::mock(ChangedColumns::class);
     $changedColumnsMock
-        ->shouldReceive('getChangedColumns')
+        ->shouldReceive('checkChangedColumns')
         ->with(Mockery::type(UpdateRowsDTO::class))
         ->andReturn(['name']);
 
@@ -263,7 +263,7 @@ it('should process DeleteRowsDTO event correctly', function () {
 
     $changedColumnsMock = Mockery::mock(ChangedColumns::class);
     $changedColumnsMock
-        ->shouldReceive('getChangedColumns')
+        ->shouldReceive('checkChangedColumns')
 
         ->with(Mockery::type(DeleteRowsDTO::class))
         ->andReturn(['id_usuario']);
@@ -314,7 +314,7 @@ it('should continue if no configured columns are changed', function () {
     ];
 
     Mockery::mock(ChangedColumns::class)
-        ->shouldReceive('getChangedColumns')
+        ->shouldReceive('checkChangedColumns')
         ->with(Mockery::type(WriteRowsDTO::class))
         ->andReturn(['other_column']);
 
@@ -338,7 +338,7 @@ it('should continue if no configured columns are changed', function () {
 
 it('should handle event without interceptor', function () {
     Mockery::mock(ChangedColumns::class)
-        ->shouldReceive('getChangedColumns')
+        ->shouldReceive('checkChangedColumns')
         ->with(Mockery::type(WriteRowsDTO::class))
         ->andReturn(['id_usuario']);
 
@@ -387,7 +387,7 @@ it('should handle event without interceptor', function () {
 
 it('should log error if interceptor throws exception', function () {
     Mockery::mock(ChangedColumns::class)
-        ->shouldReceive('getChangedColumns')
+        ->shouldReceive('checkChangedColumns')
         ->with(Mockery::type(UpdateRowsDTO::class))
         ->andReturn(['name']);
 
@@ -457,7 +457,7 @@ it('should handle event when database and table match node_secondary', function 
     ];
 
     Mockery::mock(ChangedColumns::class)
-        ->shouldReceive('getChangedColumns')
+        ->shouldReceive('checkChangedColumns')
         ->with(Mockery::type(WriteRowsDTO::class))
         ->andReturn(['user_id']);
 
@@ -507,7 +507,7 @@ it('should skip processing if ChangedColumns returns no modified columns', funct
     App::shouldNotReceive('call');
 
     Mockery::mock(ChangedColumns::class)
-        ->shouldReceive('getChangedColumns')
+        ->shouldReceive('checkChangedColumns')
         ->with(Mockery::type(WriteRowsDTO::class))
         ->andReturn([]);
 
