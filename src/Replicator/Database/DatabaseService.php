@@ -3,6 +3,7 @@
 namespace MobileStock\LaravelReplicator\Database;
 
 use Illuminate\Support\Facades\DB;
+use MobileStock\LaravelReplicator\Model\ReplicationModel;
 use MySQLReplication\Event\Event;
 
 class DatabaseService
@@ -39,17 +40,19 @@ class DatabaseService
 
     public function getLastBinlogPosition(): ?array
     {
-        DB::setDefaultConnection('replicator');
-        $lastBinlogChange = DB::selectOne('SELECT settings.json_binlog FROM settings');
-        return json_decode($lastBinlogChange->json_binlog, true);
+        $replicationModel = new ReplicationModel();
+        $results = $replicationModel->query()->first();
+        return $results ? json_decode($results->json_binlog, true) : null;
     }
 
     public function updateBinlogPosition(string $fileName, int $position): void
     {
-        DB::setDefaultConnection('replicator');
-        $jsonBinlog = json_encode(['file' => $fileName, 'position' => $position]);
-        DB::update('UPDATE settings SET settings.json_binlog = :json_binlog WHERE true;', [
-            'json_binlog' => $jsonBinlog,
-        ]);
+        $replicationModel = new ReplicationModel();
+        $replicationModel->exists = true;
+        $replicationModel->id = 1;
+        $replicationModel->json_binlog = json_encode(['file' => $fileName, 'position' => $position]);
+        $rowCount = $replicationModel->save();
+
+        echo 'Updated rows:', $rowCount;
     }
 }

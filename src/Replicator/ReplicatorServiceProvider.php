@@ -7,10 +7,18 @@ use MobileStock\LaravelReplicator\Console\Commands\StartReplicationCommand;
 
 class ReplicatorServiceProvider extends ServiceProvider
 {
+    public function boot(): void
+    {
+        $this->publishes(
+            [
+                __DIR__ . '/../../migrations/' => database_path('migrations'),
+            ],
+            'replicator-migrations'
+        );
+    }
+
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/../../config/replicator-connection.php', 'database.connections.replicator');
-
         $this->commands(StartReplicationCommand::class);
     }
 }

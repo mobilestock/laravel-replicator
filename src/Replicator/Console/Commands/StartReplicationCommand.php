@@ -23,12 +23,11 @@ class StartReplicationCommand extends Command
 
         $databases = $configManager->getDatabases();
         $tables = $configManager->getTables();
-
         $builder = (new ConfigBuilder())
-            ->withHost(Config::get('database.connections.replicator.host'))
-            ->withPort(Config::get('database.connections.replicator.port'))
-            ->withUser(Config::get('database.connections.replicator.username'))
-            ->withPassword(Config::get('database.connections.replicator.password'))
+            ->withHost(Config::get('database.connections.replicator-bridge.host'))
+            ->withPort(Config::get('database.connections.replicator-bridge.port'))
+            ->withUser(Config::get('database.connections.replicator-bridge.username'))
+            ->withPassword(Config::get('database.connections.replicator-bridge.password'))
             ->withEventsOnly([
                 ConstEventType::UPDATE_ROWS_EVENT_V1,
                 ConstEventType::WRITE_ROWS_EVENT_V1,
