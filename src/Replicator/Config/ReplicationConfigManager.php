@@ -16,6 +16,6 @@ class ReplicationConfigManager
             $tables = array_merge($tables, [$config['node_primary']['table'], $config['node_secondary']['table']]);
         }
 
-        return [$databases, $tables];
+        return [array_unique($databases), array_unique($tables)];
     }
 }
