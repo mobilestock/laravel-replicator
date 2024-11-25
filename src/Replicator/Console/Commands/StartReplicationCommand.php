@@ -19,10 +19,8 @@ class StartReplicationCommand extends Command
     public function handle(): void
     {
         $configManager = new ReplicationConfigManager();
-        $configurations = $configManager->getConfigurations();
+        [$databases, $tables] = $configManager->getGroupDatabaseConfigurations();
 
-        $databases = $configManager->getDatabases();
-        $tables = $configManager->getTables();
         $builder = (new ConfigBuilder())
             ->withHost(Config::get('database.connections.replicator-bridge.host'))
             ->withPort(Config::get('database.connections.replicator-bridge.port'))
@@ -46,7 +44,7 @@ class StartReplicationCommand extends Command
                 ->withBinLogPosition($lastBinlogPosition['position']);
         }
 
-        $registrationSubscriber = new Registration($configurations);
+        $registrationSubscriber = new Registration();
         $replication = new MySQLReplicationFactory($builder->build());
         $replication->registerSubscriber($registrationSubscriber);
 

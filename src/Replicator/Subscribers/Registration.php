@@ -3,6 +3,7 @@
 namespace MobileStock\LaravelReplicator\Subscribers;
 
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Config;
 use MobileStock\LaravelReplicator\Database\DatabaseService;
 use MobileStock\LaravelReplicator\Handlers\DeleteHandler;
 use MobileStock\LaravelReplicator\Handlers\InsertHandler;
@@ -16,13 +17,6 @@ use MySQLReplication\Event\EventSubscribers;
 
 class Registration extends EventSubscribers
 {
-    private array $configurations;
-
-    public function __construct(array $configurations)
-    {
-        $this->configurations = $configurations;
-    }
-
     public function allEvents(EventDTO $event): void
     {
         if (!($event instanceof WriteRowsDTO || $event instanceof UpdateRowsDTO || $event instanceof DeleteRowsDTO)) {
@@ -32,7 +26,7 @@ class Registration extends EventSubscribers
         $database = $event->tableMap->database;
         $table = $event->tableMap->table;
 
-        foreach ($this->configurations as $config) {
+        foreach (Config::get('replicator') as $config) {
             $nodePrimaryDatabase = $config['node_primary']['database'];
             $nodePrimaryTable = $config['node_primary']['table'];
             $nodeSecondaryDatabase = $config['node_secondary']['database'];
