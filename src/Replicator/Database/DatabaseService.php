@@ -51,8 +51,6 @@ class DatabaseService
         $replicationModel->exists = true;
         $replicationModel->id = 1;
         $replicationModel->json_binlog = json_encode(['file' => $fileName, 'position' => $position]);
-        $rowCount = $replicationModel->save();
-
-        echo 'Updated rows:', $rowCount;
+        $replicationModel->save();
     }
 }
