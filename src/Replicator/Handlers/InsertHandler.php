@@ -2,7 +2,8 @@
 
 namespace MobileStock\LaravelReplicator\Handlers;
 
-use MobileStock\LaravelReplicator\Database\DatabaseService;
+use Illuminate\Support\Facades\DB;
+use MySQLReplication\Event\Event;
 
 class InsertHandler
 {
@@ -30,5 +31,11 @@ class InsertHandler
 
         $databaseHandler = new DatabaseService();
         $databaseHandler->insert($nodeSecondaryDatabase, $nodeSecondaryTable, $columns, $placeholders, $binds);
+        $sql =
+            "INSERT INTO {$nodeSecondaryDatabase}.{$nodeSecondaryTable} ({$columns}) VALUES ({$placeholders})" .
+            Event::REPLICATION_QUERY .
+            ';';
+
+        DB::insert($sql, $binds);
     }
 }

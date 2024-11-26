@@ -2,7 +2,8 @@
 
 namespace MobileStock\LaravelReplicator\Handlers;
 
-use MobileStock\LaravelReplicator\Database\DatabaseService;
+use Illuminate\Support\Facades\DB;
+use MySQLReplication\Event\Event;
 
 class DeleteHandler
 {
@@ -19,5 +20,14 @@ class DeleteHandler
 
         $databaseHandler = new DatabaseService();
         $databaseHandler->delete($nodeSecondaryDatabase, $nodeSecondaryTable, $nodeSecondaryReferenceKey, $binds);
+        $sql =
+            "DELETE FROM
+                {$nodeSecondaryDatabase}.{$nodeSecondaryTable}
+            WHERE
+                {$nodeSecondaryDatabase}.{$nodeSecondaryTable}.{$nodeSecondaryReferenceKey} = :{$nodeSecondaryReferenceKey}" .
+            Event::REPLICATION_QUERY .
+            ';';
+
+        DB::delete($sql, $binds);
     }
 }

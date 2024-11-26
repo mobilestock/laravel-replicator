@@ -2,7 +2,8 @@
 
 namespace MobileStock\LaravelReplicator\Handlers;
 
-use MobileStock\LaravelReplicator\Database\DatabaseService;
+use Illuminate\Support\Facades\DB;
+use MySQLReplication\Event\Event;
 
 class UpdateHandler
 {
@@ -48,6 +49,13 @@ class UpdateHandler
                 $nodeSecondaryReferenceKey,
                 $binds
             );
+            $sql =
+                "UPDATE {$nodeSecondaryDatabase}.{$nodeSecondaryTable}
+                        SET {$clausule}
+                        WHERE {$nodeSecondaryDatabase}.{$nodeSecondaryTable}.{$nodeSecondaryReferenceKey} = :{$nodeSecondaryReferenceKey}" .
+                Event::REPLICATION_QUERY .
+                ';';
+            DB::update($sql, $binds);
         }
     }
 }

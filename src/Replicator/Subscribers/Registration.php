@@ -4,6 +4,7 @@ namespace MobileStock\LaravelReplicator\Subscribers;
 
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use MobileStock\LaravelReplicator\Database\DatabaseService;
 use MobileStock\LaravelReplicator\Handlers\DeleteHandler;
 use MobileStock\LaravelReplicator\Handlers\InsertHandler;
@@ -22,6 +23,8 @@ class Registration extends EventSubscribers
         if (!($event instanceof WriteRowsDTO || $event instanceof UpdateRowsDTO || $event instanceof DeleteRowsDTO)) {
             return;
         }
+
+        DB::setDefaultConnection('replicator-bridge');
 
         $database = $event->tableMap->database;
         $table = $event->tableMap->table;
