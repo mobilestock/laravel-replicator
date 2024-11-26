@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "054997666193a88274010af91b291c44",
+    "content-hash": "c3cfeb1b2b8162af2ad864850da587be",
     "packages": [
         {
             "name": "brick/math",
@@ -2188,6 +2188,43 @@
                 }
             ],
             "time": "2024-09-21T08:32:55+00:00"
+        },
+        {
+            "name": "mobilestock/laravel-model-affected-rows-verification",
+            "version": "v0.0.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/mobilestock/laravel-model-affected-rows-verification.git",
+                "reference": "b80595075fb48bda6e8b330f8b73c03488b73515"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/mobilestock/laravel-model-affected-rows-verification/zipball/b80595075fb48bda6e8b330f8b73c03488b73515",
+                "reference": "b80595075fb48bda6e8b330f8b73c03488b73515",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/database": "^11.30"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "MobileStock\\Laravel\\Model\\AffectedRowsVerification\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "authors": [
+                {
+                    "name": "MobileStock",
+                    "email": "fabio@mobilestock.com.br"
+                }
+            ],
+            "description": "laravel-model-affected-rows-verification is a library that extends the default Laravel model to include implicit row count verification for update and delete operations. This ensures that these operations are conducted safely, providing an extra layer of validation to prevent unintended data modifications and enhance the stability of your Laravel applications.",
+            "support": {
+                "issues": "https://github.com/mobilestock/laravel-model-affected-rows-verification/issues",
+                "source": "https://github.com/mobilestock/laravel-model-affected-rows-verification/tree/v0.0.6"
+            },
+            "time": "2024-11-08T15:55:59+00:00"
         },
         {
             "name": "monolog/monolog",
@@ -11066,6 +11103,7 @@
         "php": ">=8.2",
         "ext-bcmath": "*",
         "ext-json": "*",
+        "ext-pdo_mysql": "*",
         "ext-sockets": "*"
     },
     "platform-dev": {},
