@@ -8,13 +8,13 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('replication', function (Blueprint $table) {
+        Schema::create('replicator_configs', function (Blueprint $table) {
             $table->increments('id');
             $table->text('json_binlog')->nullable(false);
             $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
         });
 
-        DB::table('replication')->insert([
+        DB::table('replicator_configs')->insert([
             'id' => 1,
             'json_binlog' => '{"file": null, "position": null}',
         ]);
@@ -22,6 +22,6 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::dropIfExists('replication');
+        Schema::dropIfExists('replicator_configs');
     }
 };
