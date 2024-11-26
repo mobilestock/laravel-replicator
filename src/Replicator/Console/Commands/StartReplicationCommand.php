@@ -47,7 +47,7 @@ class StartReplicationCommand extends Command
         $registrationSubscriber = new Registration();
         $replication = new MySQLReplicationFactory($builder->build());
         $replication->registerSubscriber($registrationSubscriber);
-
+        $this->info('Replication process has been started');
         $replication->run();
     }
 }
