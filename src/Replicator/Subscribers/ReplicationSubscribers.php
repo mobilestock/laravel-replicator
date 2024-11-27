@@ -63,13 +63,11 @@ class ReplicationSubscribers extends EventSubscribers
                 foreach ($event->values as $row) {
                     DB::beginTransaction();
 
-                    if ($event instanceof WriteRowsDTO) {
-                        $columnMappings[$nodePrimaryReferenceKey] = $nodeSecondaryReferenceKey;
-                    }
+                    $rowData = $event instanceof UpdateRowsDTO ? $row['after'] : $row;
 
                     if ($interceptorFunction) {
-                        $row = App::call($interceptorFunction, [
-                            'data' => $row,
+                        $rowData = App::call($interceptorFunction, [
+                            'rowData' => $rowData,
                             'nodePrimaryTable' => $nodePrimaryTable,
                             'nodePrimaryDatabase' => $nodePrimaryDatabase,
                         ]);
@@ -81,7 +79,7 @@ class ReplicationSubscribers extends EventSubscribers
                         $nodeSecondaryTable,
                         $nodeSecondaryReferenceKey,
                         $columnMappings,
-                        $row
+                        $rowData
                     );
 
                     switch ($event::class) {
