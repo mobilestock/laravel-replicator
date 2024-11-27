@@ -5,11 +5,8 @@ namespace MobileStock\LaravelReplicator\Subscribers;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
-use MobileStock\LaravelReplicator\Database\DatabaseService;
-use MobileStock\LaravelReplicator\Handlers\DeleteHandler;
-use MobileStock\LaravelReplicator\Handlers\InsertHandler;
-use MobileStock\LaravelReplicator\Handlers\UpdateHandler;
-use MobileStock\LaravelReplicator\Helpers\ChangedColumns;
+use MobileStock\LaravelReplicator\Database\DatabaseHandler;
+use MobileStock\LaravelReplicator\Model\ReplicatorConfig;
 use MySQLReplication\Event\DTO\DeleteRowsDTO;
 use MySQLReplication\Event\DTO\EventDTO;
 use MySQLReplication\Event\DTO\UpdateRowsDTO;
@@ -64,56 +61,43 @@ class Registration extends EventSubscribers
                 $interceptorFunction = $config['interceptor'] ?? false;
 
                 foreach ($event->values as $row) {
+                    DB::beginTransaction();
+
+                    if ($event instanceof WriteRowsDTO) {
+                        $columnMappings[$nodePrimaryReferenceKey] = $nodeSecondaryReferenceKey;
+                    }
+
+                    if ($interceptorFunction) {
+                        $row = App::call($interceptorFunction, [
+                            'data' => $row,
+                            'nodePrimaryTable' => $nodePrimaryTable,
+                            'nodePrimaryDatabase' => $nodePrimaryDatabase,
+                        ]);
+                    }
+
+                    $databaseHandler = new DatabaseHandler(
+                        $nodePrimaryReferenceKey,
+                        $nodeSecondaryDatabase,
+                        $nodeSecondaryTable,
+                        $nodeSecondaryReferenceKey,
+                        $columnMappings,
+                        $row
+                    );
+
                     switch ($event::class) {
                         case UpdateRowsDTO::class:
-                            if ($interceptorFunction) {
-                                $row['after'] = App::call($interceptorFunction, [
-                                    'data' => $row['after'],
-                                    'nodePrimaryTable' => $nodePrimaryTable,
-                                    'nodePrimaryDatabase' => $nodePrimaryDatabase,
-                                ]);
-                            }
-
-                            UpdateHandler::handle(
-                                $nodePrimaryReferenceKey,
-                                $nodeSecondaryDatabase,
-                                $nodeSecondaryTable,
-                                $nodeSecondaryReferenceKey,
-                                $columnMappings,
-                                $row
-                            );
+                            $databaseHandler->update();
                             break;
 
                         case WriteRowsDTO::class:
-                            if ($interceptorFunction) {
-                                $row = App::call($interceptorFunction, [
-                                    'data' => $row,
-                                    'nodePrimaryTable' => $nodePrimaryTable,
-                                    'nodePrimaryDatabase' => $nodePrimaryDatabase,
-                                ]);
-                            }
-
-                            InsertHandler::handle($nodeSecondaryDatabase, $nodeSecondaryTable, $columnMappings, $row);
+                            $databaseHandler->insert();
                             break;
 
                         case DeleteRowsDTO::class:
-                            if ($interceptorFunction) {
-                                $row = App::call($interceptorFunction, [
-                                    'data' => $row,
-                                    'nodePrimaryTable' => $nodePrimaryTable,
-                                    'nodePrimaryDatabase' => $nodePrimaryDatabase,
-                                ]);
-                            }
-
-                            DeleteHandler::handle(
-                                $nodeSecondaryDatabase,
-                                $nodeSecondaryTable,
-                                $nodePrimaryReferenceKey,
-                                $nodeSecondaryReferenceKey,
-                                $row
-                            );
+                            $databaseHandler->delete();
                             break;
                     }
+                    DB::commit();
                 }
 
                 $binLogInfo = $event->getEventInfo()->binLogCurrent;
