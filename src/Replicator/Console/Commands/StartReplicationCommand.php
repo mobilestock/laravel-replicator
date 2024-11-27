@@ -4,6 +4,7 @@ namespace MobileStock\LaravelReplicator\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use MobileStock\LaravelReplicator\Config\ReplicationConfigManager;
 use MobileStock\LaravelReplicator\Database\DatabaseService;
 use MobileStock\LaravelReplicator\Subscribers\Registration;
@@ -35,8 +36,11 @@ class StartReplicationCommand extends Command
             ->withDatabasesOnly($databases)
             ->withTablesOnly($tables);
 
-        $databaseService = new DatabaseService();
-        $lastBinlogPosition = $databaseService->getLastBinlogPosition();
+        // @issue https://github.com/mobilestock/backend/issues/639
+        $lastBinlogPosition = DB::selectOne('SELECT replicator_configs.json_binlog FROM replicator_configs')
+            ->json_binlog;
+
+        $lastBinlogPosition = json_decode($lastBinlogPosition, true);
 
         if (!empty($lastBinlogPosition['file']) && !empty($lastBinlogPosition['position'])) {
             $builder

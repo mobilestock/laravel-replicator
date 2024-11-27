@@ -101,8 +101,19 @@ class Registration extends EventSubscribers
                 }
 
                 $binLogInfo = $event->getEventInfo()->binLogCurrent;
-                $databaseService = new DatabaseService();
-                $databaseService->updateBinlogPosition($binLogInfo->getBinFileName(), $binLogInfo->getBinLogPosition());
+
+                $replicationModel = new ReplicatorConfig();
+                $replicationModel->exists = true;
+                $replicationModel->id = 1;
+                // @issue https://github.com/mobilestock/backend/issues/639
+                $replicationModel->json_binlog = json_encode([
+                    'file' => $binLogInfo->getBinFileName(),
+                    'position' => $binLogInfo->getBinLogPosition(),
+                ]);
+                $replicationModel->save();
+            }
+        }
+    }
 
     public function checkChangedColumns(EventDTO $event, array $configuredColumns): bool
     {
