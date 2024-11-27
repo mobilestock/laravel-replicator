@@ -52,7 +52,7 @@ class Registration extends EventSubscribers
                     $columnMappings = array_flip($config['columns']);
                 }
 
-                if (!ChangedColumns::checkChangedColumns($event, array_keys($columnMappings))) {
+                if (!$this->checkChangedColumns($event, array_keys($columnMappings))) {
                     continue;
                 }
 
@@ -119,7 +119,35 @@ class Registration extends EventSubscribers
                 $binLogInfo = $event->getEventInfo()->binLogCurrent;
                 $databaseService = new DatabaseService();
                 $databaseService->updateBinlogPosition($binLogInfo->getBinFileName(), $binLogInfo->getBinLogPosition());
+
+    public function checkChangedColumns(EventDTO $event, array $configuredColumns): bool
+    {
+        $changedColumns = [];
+
+        foreach ($event->values as $row) {
+            switch ($event::class) {
+                case UpdateRowsDTO::class:
+                    $changedColumns = array_merge(
+                        $changedColumns,
+                        array_keys(array_diff_assoc($row['after'], $row['before']))
+                    );
+                    break;
+                case WriteRowsDTO::class:
+                    $changedColumns = array_merge($changedColumns, array_keys($row));
+                    break;
+                case DeleteRowsDTO::class:
+                    $changedColumns = array_merge(
+                        $changedColumns,
+                        array_keys($row['values'] ?? ($row['before'] ?? $row))
+                    );
+                    break;
             }
         }
+
+        if (empty(array_intersect($configuredColumns, $changedColumns))) {
+            return false;
+        }
+
+        return true;
     }
 }
