@@ -6,8 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use MobileStock\LaravelReplicator\Config\ReplicationConfigManager;
-use MobileStock\LaravelReplicator\Database\DatabaseService;
-use MobileStock\LaravelReplicator\Subscribers\Registration;
+use MobileStock\LaravelReplicator\Subscribers\ReplicationSubscribers;
 use MySQLReplication\Config\ConfigBuilder;
 use MySQLReplication\Definitions\ConstEventType;
 use MySQLReplication\MySQLReplicationFactory;
@@ -19,6 +18,7 @@ class StartReplicationCommand extends Command
 
     public function handle(): void
     {
+        DB::setDefaultConnection('replicator-bridge');
         $configManager = new ReplicationConfigManager();
         [$databases, $tables] = $configManager->getGroupDatabaseConfigurations();
 
@@ -48,7 +48,7 @@ class StartReplicationCommand extends Command
                 ->withBinLogPosition($lastBinlogPosition['position']);
         }
 
-        $registrationSubscriber = new Registration();
+        $registrationSubscriber = new ReplicationSubscribers();
         $replication = new MySQLReplicationFactory($builder->build());
         $replication->registerSubscriber($registrationSubscriber);
         $this->info('Replication process has been started');

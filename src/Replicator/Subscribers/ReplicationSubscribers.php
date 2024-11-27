@@ -13,7 +13,7 @@ use MySQLReplication\Event\DTO\UpdateRowsDTO;
 use MySQLReplication\Event\DTO\WriteRowsDTO;
 use MySQLReplication\Event\EventSubscribers;
 
-class Registration extends EventSubscribers
+class ReplicationSubscribers extends EventSubscribers
 {
     public function allEvents(EventDTO $event): void
     {
