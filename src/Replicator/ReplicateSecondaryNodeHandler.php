@@ -1,21 +1,34 @@
 <?php
 
-namespace MobileStock\LaravelReplicator\Database;
+namespace MobileStock\LaravelReplicator;
 
 use DomainException;
 use Illuminate\Support\Facades\DB;
 use MySQLReplication\Event\Event;
 
-class DatabaseHandler
+class ReplicateSecondaryNodeHandler
 {
+    public string $nodePrimaryReferenceKey;
+    public string $nodeSecondaryDatabase;
+    public string $nodeSecondaryTable;
+    public string $nodeSecondaryReferenceKey;
+    public array $columnMappings;
+    public array $row;
+
     public function __construct(
-        public string $nodePrimaryReferenceKey,
-        public string $nodeSecondaryDatabase,
-        public string $nodeSecondaryTable,
-        public string $nodeSecondaryReferenceKey,
-        public array $columnMappings,
-        public array $row
+        string $nodePrimaryReferenceKey,
+        string $nodeSecondaryDatabase,
+        string $nodeSecondaryTable,
+        string $nodeSecondaryReferenceKey,
+        array $columnMappings,
+        array $row
     ) {
+        $this->nodePrimaryReferenceKey = $nodePrimaryReferenceKey;
+        $this->nodeSecondaryDatabase = $nodeSecondaryDatabase;
+        $this->nodeSecondaryTable = $nodeSecondaryTable;
+        $this->nodeSecondaryReferenceKey = $nodeSecondaryReferenceKey;
+        $this->columnMappings = $columnMappings;
+        $this->row = $row;
     }
 
     public function update(): void
@@ -29,8 +42,6 @@ class DatabaseHandler
                 $changedColumns[$nodeSecondaryColumn] = $after[$nodePrimaryColumn];
             }
         }
-        echo 'Changed Columns:';
-        dump($changedColumns);
 
         $referenceKeyValue = $after[$this->nodePrimaryReferenceKey];
 
@@ -40,23 +51,12 @@ class DatabaseHandler
         );
         $binds[":{$this->nodeSecondaryReferenceKey}"] = $referenceKeyValue;
 
-        echo 'Binds:';
-        dump($binds);
         $clausule = implode(
             ', ',
             array_map(function ($column) {
                 return "{$column} = :{$column}";
             }, array_keys($changedColumns))
         );
-        echo 'Clausule:', $clausule;
-
-        echo 'Before:';
-        dump($before);
-        echo 'After:';
-        dump($after);
-
-        echo 'Column Mappings:';
-        dump($this->columnMappings);
 
         $sql =
             "UPDATE {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
@@ -74,9 +74,6 @@ class DatabaseHandler
     public function insert(): void
     {
         $mappedData = [];
-
-        $this->columnMappings[$this->nodePrimaryReferenceKey] = $this->nodeSecondaryReferenceKey;
-
         foreach ($this->row as $column => $value) {
             if (!isset($this->columnMappings[$column])) {
                 continue;
@@ -84,14 +81,8 @@ class DatabaseHandler
             $mappedData[$this->columnMappings[$column]] = $value;
         }
 
-        echo 'Mapped Data:';
-        dump($mappedData);
-
         $columns = implode(',', array_keys($mappedData));
         $placeholders = implode(',', array_map(fn($column) => ":{$column}", array_keys($mappedData)));
-
-        echo 'Columns:', $columns;
-        echo 'Placeholders:', $placeholders;
 
         $sql =
             "INSERT INTO {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable} ({$columns}) VALUES ({$placeholders})" .
@@ -106,9 +97,6 @@ class DatabaseHandler
         $referenceKeyValue = $this->row[$this->nodePrimaryReferenceKey];
 
         $binds = [":{$this->nodeSecondaryReferenceKey}" => $referenceKeyValue];
-
-        echo 'Binds:';
-        dump($binds);
 
         $sql =
             "DELETE FROM

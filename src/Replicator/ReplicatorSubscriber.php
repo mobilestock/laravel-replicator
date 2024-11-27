@@ -2,18 +2,19 @@
 
 namespace MobileStock\LaravelReplicator\Subscribers;
 
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
-use MobileStock\LaravelReplicator\Database\DatabaseHandler;
+use Illuminate\Support\Facades\Event;
+use MobileStock\LaravelReplicator\Events\BeforeReplicate;
 use MobileStock\LaravelReplicator\Model\ReplicatorConfig;
+use MobileStock\LaravelReplicator\ReplicateSecondaryNodeHandler;
 use MySQLReplication\Event\DTO\DeleteRowsDTO;
 use MySQLReplication\Event\DTO\EventDTO;
 use MySQLReplication\Event\DTO\UpdateRowsDTO;
 use MySQLReplication\Event\DTO\WriteRowsDTO;
 use MySQLReplication\Event\EventSubscribers;
 
-class ReplicationSubscribers extends EventSubscribers
+class ReplicatorSubscriber extends EventSubscribers
 {
     public function allEvents(EventDTO $event): void
     {
@@ -58,28 +59,22 @@ class ReplicationSubscribers extends EventSubscribers
                 $nodeSecondaryTable = $nodeSecondaryConfig['table'];
                 $nodeSecondaryReferenceKey = $nodeSecondaryConfig['reference_key'];
 
-                $interceptorFunction = $config['interceptor'] ?? false;
-
                 foreach ($event->values as $row) {
                     DB::beginTransaction();
 
-                    $rowData = $event instanceof UpdateRowsDTO ? $row['after'] : $row;
-
-                    if ($interceptorFunction) {
-                        $rowData = App::call($interceptorFunction, [
-                            'rowData' => $rowData,
-                            'nodePrimaryTable' => $nodePrimaryTable,
-                            'nodePrimaryDatabase' => $nodePrimaryDatabase,
-                        ]);
+                    if ($event instanceof WriteRowsDTO) {
+                        $columnMappings[$nodePrimaryReferenceKey] = $nodeSecondaryReferenceKey;
                     }
 
-                    $databaseHandler = new DatabaseHandler(
+                    Event::dispatch(new BeforeReplicate($nodePrimaryDatabase, $nodePrimaryTable, $row));
+
+                    $databaseHandler = new ReplicateSecondaryNodeHandler(
                         $nodePrimaryReferenceKey,
                         $nodeSecondaryDatabase,
                         $nodeSecondaryTable,
                         $nodeSecondaryReferenceKey,
                         $columnMappings,
-                        $rowData
+                        $row
                     );
 
                     switch ($event::class) {
@@ -137,10 +132,6 @@ class ReplicationSubscribers extends EventSubscribers
             }
         }
 
-        if (empty(array_intersect($configuredColumns, $changedColumns))) {
-            return false;
-        }
-
-        return true;
+        return !empty(array_intersect($configuredColumns, $changedColumns));
     }
 }

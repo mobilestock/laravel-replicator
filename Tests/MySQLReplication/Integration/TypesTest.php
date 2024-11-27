@@ -479,17 +479,24 @@ test('Should be longer text than 16Mb', function () {
     // https://dev.mysql.com/doc/internals/en/mysql-packet.html
     // https://dev.mysql.com/doc/internals/en/sending-more-than-16mbyte.html
 
-    $long_text_data = '';
-    for ($i = 0; $i < 40000000; ++$i) {
-        $long_text_data .= 'a';
+    $originalMemoryLimit = ini_get('memory_limit');
+    ini_set('memory_limit', '256M');
+
+    try {
+        $long_text_data = '';
+        for ($i = 0; $i < 40000000; ++$i) {
+            $long_text_data .= 'a';
+        }
+        $create_query = 'CREATE TABLE test (data LONGTEXT);';
+        $insert_query = 'INSERT INTO test (data) VALUES ("' . $long_text_data . '")';
+        $event = $this->createAndInsertValue($create_query, $insert_query);
+
+        expect(mb_strlen($event->values[0]['data']))->toEqual(mb_strlen($long_text_data));
+
+        $long_text_data = null;
+    } finally {
+        ini_set('memory_limit', $originalMemoryLimit);
     }
-    $create_query = 'CREATE TABLE test (data LONGTEXT);';
-    $insert_query = 'INSERT INTO test (data) VALUES ("' . $long_text_data . '")';
-    $event = $this->createAndInsertValue($create_query, $insert_query);
-
-    expect(mb_strlen($event->values[0]['data']))->toEqual(mb_strlen($long_text_data));
-
-    $long_text_data = null;
 });
 
 test('Should be blob', function () {
