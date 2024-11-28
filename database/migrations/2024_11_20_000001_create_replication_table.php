@@ -19,9 +19,4 @@ return new class extends Migration {
             'json_binlog' => '{"file": null, "position": null}',
         ]);
     }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('replicator_configs');
-    }
 };

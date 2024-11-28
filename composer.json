@@ -1,6 +1,6 @@
 {
     "name": "mobilestock/laravel-replicator",
-    "description": "A replicator package for Laravel Projects. With ANNOTATE_ROWS_EVENT enabled. Based in krowinski/php-mysql-replication repository",
+    "description": "laravel-replicator is a Laravel Package that provides a peer-to-peer MySQL replication, using binlogs and events to get the changes from databases, using ANNOTATE_ROWS_EVENT to get the affected rows in the events.",
     "license": "MIT",
     "type": "library",
     "authors": [
@@ -10,7 +10,7 @@
         }
     ],
     "require": {
-        "php": ">=8.2",
+        "php": ">=8.3",
         "ext-bcmath": "*",
         "ext-json": "*",
         "ext-pdo_mysql": "*",
@@ -18,14 +18,11 @@
         "doctrine/collections": "^2.1",
         "doctrine/dbal": "^3.8",
         "illuminate/console": "^11.29",
-        "illuminate/contracts": "^10.0||^11.0",
         "illuminate/support": "^11.29",
         "mobilestock/laravel-model-affected-rows-verification": "^0.0.6",
         "psr/log": "^3.0",
         "psr/simple-cache": "^3.0",
-        "symfony/dependency-injection": "^7.0",
-        "symfony/event-dispatcher": "^7.0",
-        "vlucas/phpdotenv": "^5.6"
+        "symfony/event-dispatcher": "^7.0"
     },
     "require-dev": {
         "kubawerlos/php-cs-fixer-custom-fixers": "^3.19",
@@ -33,9 +30,7 @@
         "monolog/monolog": "^3.5",
         "orchestra/testbench": "^9.5",
         "pestphp/pest": "^2.36",
-        "pestphp/pest-plugin-drift": "^2.6",
         "pestphp/pest-plugin-laravel": "^2.4",
-        "phpoption/phpoption": "^1.9",
         "phpstan/phpstan": "^1.10",
         "phpunit/phpunit": "^10.5",
         "symplify/easy-coding-standard": "^12.1"
@@ -64,7 +59,5 @@
                 "MobileStock\\LaravelReplicator\\ReplicatorServiceProvider"
             ]
         }
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true
+    }
 }
