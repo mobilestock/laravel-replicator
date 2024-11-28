@@ -5,7 +5,7 @@ namespace MobileStock\LaravelReplicator\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
-use MobileStock\LaravelReplicator\Subscribers\ReplicatorSubscriber;
+use MobileStock\LaravelReplicator\ReplicatorSubscriber;
 use MySQLReplication\Config\ConfigBuilder;
 use MySQLReplication\Definitions\ConstEventType;
 use MySQLReplication\MySQLReplicationFactory;

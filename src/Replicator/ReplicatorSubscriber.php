@@ -1,13 +1,12 @@
 <?php
 
-namespace MobileStock\LaravelReplicator\Subscribers;
+namespace MobileStock\LaravelReplicator;
 
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use MobileStock\LaravelReplicator\Events\BeforeReplicate;
 use MobileStock\LaravelReplicator\Model\ReplicatorConfig;
-use MobileStock\LaravelReplicator\ReplicateSecondaryNodeHandler;
 use MySQLReplication\Event\DTO\DeleteRowsDTO;
 use MySQLReplication\Event\DTO\EventDTO;
 use MySQLReplication\Event\DTO\UpdateRowsDTO;
@@ -62,11 +61,23 @@ class ReplicatorSubscriber extends EventSubscribers
                 foreach ($event->values as $row) {
                     DB::beginTransaction();
 
+                    $rowData = $row;
+
                     if ($event instanceof WriteRowsDTO) {
                         $columnMappings[$nodePrimaryReferenceKey] = $nodeSecondaryReferenceKey;
+                    } elseif ($event instanceof UpdateRowsDTO) {
+                        $rowData = $row['after'];
                     }
 
-                    Event::dispatch(new BeforeReplicate($nodePrimaryDatabase, $nodePrimaryTable, $row));
+                    $beforeReplicateEvent = new BeforeReplicate($nodePrimaryDatabase, $nodePrimaryTable, $rowData);
+                    Event::dispatch($beforeReplicateEvent);
+
+                    if ($event instanceof UpdateRowsDTO) {
+                        $beforeReplicateEvent->rowData = [
+                            'before' => $row['before'],
+                            'after' => $beforeReplicateEvent->rowData,
+                        ];
+                    }
 
                     $databaseHandler = new ReplicateSecondaryNodeHandler(
                         $nodePrimaryReferenceKey,
@@ -74,7 +85,7 @@ class ReplicatorSubscriber extends EventSubscribers
                         $nodeSecondaryTable,
                         $nodeSecondaryReferenceKey,
                         $columnMappings,
-                        $row
+                        $beforeReplicateEvent->rowData
                     );
 
                     switch ($event::class) {
