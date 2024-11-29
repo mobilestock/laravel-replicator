@@ -82,7 +82,6 @@ class Event
         }
         if ($eventInfo->type === ConstEventType::MARIA_ANNOTATE_ROWS_EVENT->value) {
             if (
-                $binaryDataReader->getBinaryData() &&
                 strpos($binaryDataReader->getBinaryData(), self::REPLICATION_QUERY) !== false
             ) {
                 $this->isReplicated = true;
