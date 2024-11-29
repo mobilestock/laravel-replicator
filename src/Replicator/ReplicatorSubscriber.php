@@ -110,10 +110,10 @@ class ReplicatorSubscriber extends EventSubscribers
                 $replicationModel->exists = true;
                 $replicationModel->id = 1;
                 // @issue https://github.com/mobilestock/backend/issues/639
-                $replicationModel->json_binlog = json_encode([
+                $replicationModel->json_binlog = [
                     'file' => $binLogInfo->getBinFileName(),
                     'position' => $binLogInfo->getBinLogPosition(),
-                ]);
+                ];
                 $replicationModel->save();
             }
         }
