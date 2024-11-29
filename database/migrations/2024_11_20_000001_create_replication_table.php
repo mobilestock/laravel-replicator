@@ -14,9 +14,14 @@ return new class extends Migration {
             $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
         });
 
+        $binlogStatus = DB::select('SHOW MASTER STATUS');
+
+        $file = $binlogStatus[0]->File;
+        $position = $binlogStatus[0]->Position;
+
         DB::table('replicator_configs')->insert([
             'id' => 1,
-            'json_binlog' => '{"file": null, "position": null}',
+            'json_binlog' => json_encode(['file' => $file, 'position' => $position]),
         ]);
     }
 };
