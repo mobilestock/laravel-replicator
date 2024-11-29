@@ -40,7 +40,7 @@ class Event
     {
         $binaryDataReader = new BinaryDataReader($this->binLogSocketConnect->getResponse());
 
-        // check EOF_Packet -> https://dev.mysql.com/doc/internals/en/packet-EOF_Packet.html
+        // check EOF_Packet -> https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_eof_packet.html
         if ($binaryDataReader->readUInt8() === self::EOF_HEADER_VALUE) {
             return;
         }
@@ -81,7 +81,10 @@ class Event
             ))->makeMariaDbGTIDLogDTO();
         }
         if ($eventInfo->type === ConstEventType::MARIA_ANNOTATE_ROWS_EVENT->value) {
-            if ($binaryDataReader->getBinaryData() && strpos($binaryDataReader->getBinaryData(), self::REPLICATION_QUERY) !== false) {
+            if (
+                $binaryDataReader->getBinaryData() &&
+                strpos($binaryDataReader->getBinaryData(), self::REPLICATION_QUERY) !== false
+            ) {
                 $this->isReplicated = true;
                 return null;
             } else {
@@ -131,6 +134,11 @@ class Event
             );
         }
 
+        // The Rows Query Log Event will be triggered with enabled MySQL Config `binlog_rows_query_log_events`
+        if ($eventInfo->type === ConstEventType::ROWS_QUERY_LOG_EVENT->value) {
+            return (new RowsQueryEvent($eventInfo, $binaryDataReader, $this->binLogServerInfo))->makeRowsQueryDTO();
+        }
+
         if ($eventInfo->type === ConstEventType::FORMAT_DESCRIPTION_EVENT->value) {
             return new FormatDescriptionEventDTO($eventInfo);
         }
@@ -138,6 +146,9 @@ class Event
         return null;
     }
 
+    /**
+     * @see https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_replication_binlog_event.html#sect_protocol_replication_binlog_event_header
+     */
     private function createEventInfo(BinaryDataReader $binaryDataReader): EventInfo
     {
         return new EventInfo(
