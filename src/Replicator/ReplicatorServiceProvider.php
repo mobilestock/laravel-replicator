@@ -17,6 +17,11 @@ class ReplicatorServiceProvider extends ServiceProvider
             ],
             'replicator-config'
         );
+
+        $this->mergeConfigFrom(
+            __DIR__ . '/../../config/replicator-bridge.php',
+            'database.connections.replicator-bridge'
+        );
     }
 
     public function register(): void

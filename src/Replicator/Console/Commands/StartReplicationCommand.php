@@ -42,10 +42,7 @@ class StartReplicationCommand extends Command
             ->withTablesOnly($tables);
 
         // @issue https://github.com/mobilestock/backend/issues/639
-        $lastBinlogPosition = DB::selectOne('SELECT replicator_configs.json_binlog FROM replicator_configs')
-            ->json_binlog;
-
-        $lastBinlogPosition = json_decode($lastBinlogPosition, true);
+        $lastBinlogPosition = DB::selectOne('SELECT replicator_configs.json_binlog FROM replicator_configs')['binlog'];
 
         if (!empty($lastBinlogPosition['file']) && !empty($lastBinlogPosition['position'])) {
             $builder

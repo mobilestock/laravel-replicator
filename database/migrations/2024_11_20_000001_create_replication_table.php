@@ -14,14 +14,17 @@ return new class extends Migration {
             $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
         });
 
-        $binlogStatus = DB::select('SHOW MASTER STATUS');
-
-        $file = $binlogStatus[0]->File;
-        $position = $binlogStatus[0]->Position;
-
-        DB::table('replicator_configs')->insert([
-            'id' => 1,
-            'json_binlog' => json_encode(['file' => $file, 'position' => $position]),
-        ]);
+        $binlogStatus = DB::selectOne('SHOW MASTER STATUS');
+        $file = $binlogStatus['File'];
+        $position = $binlogStatus['Position'];
+        $replicationModel = new ReplicatorConfig();
+        // @issue https://github.com/mobilestock/backend/issues/674
+        $replicationModel->id = 1;
+        // @issue https://github.com/mobilestock/backend/issues/639
+        $replicationModel->json_binlog = [
+            'file' => $file,
+            'position' => $position,
+        ];
+        $replicationModel->save();
     }
 };
