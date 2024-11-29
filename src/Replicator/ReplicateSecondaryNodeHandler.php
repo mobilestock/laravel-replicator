@@ -8,27 +8,14 @@ use MySQLReplication\Event\Event;
 
 class ReplicateSecondaryNodeHandler
 {
-    public string $nodePrimaryReferenceKey;
-    public string $nodeSecondaryDatabase;
-    public string $nodeSecondaryTable;
-    public string $nodeSecondaryReferenceKey;
-    public array $columnMappings;
-    public array $row;
-
     public function __construct(
-        string $nodePrimaryReferenceKey,
-        string $nodeSecondaryDatabase,
-        string $nodeSecondaryTable,
-        string $nodeSecondaryReferenceKey,
-        array $columnMappings,
-        array $row
+        public string $nodePrimaryReferenceKey,
+        public string $nodeSecondaryDatabase,
+        public string $nodeSecondaryTable,
+        public string $nodeSecondaryReferenceKey,
+        public array $columnMappings,
+        public array $row
     ) {
-        $this->nodePrimaryReferenceKey = $nodePrimaryReferenceKey;
-        $this->nodeSecondaryDatabase = $nodeSecondaryDatabase;
-        $this->nodeSecondaryTable = $nodeSecondaryTable;
-        $this->nodeSecondaryReferenceKey = $nodeSecondaryReferenceKey;
-        $this->columnMappings = $columnMappings;
-        $this->row = $row;
     }
 
     public function update(): void
