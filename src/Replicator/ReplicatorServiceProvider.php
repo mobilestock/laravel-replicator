@@ -11,9 +11,12 @@ class ReplicatorServiceProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations/');
 
-        $this->publishes([
-            __DIR__ . '/../../config/replicator.php' => config_path('replicator.php'),
-        ]);
+        $this->publishes(
+            [
+                __DIR__ . '/../../config/replicator.php' => config_path('replicator.php'),
+            ],
+            'replicator-config'
+        );
     }
 
     public function register(): void
