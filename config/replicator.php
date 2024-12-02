@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'replication_name' => [
+    [
         'columns' => [
             'COLUMN_PRIMARY_NODE' => 'COLUMN_SECONDARY_NODE',
         ],
