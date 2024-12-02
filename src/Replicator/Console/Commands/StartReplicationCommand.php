@@ -39,7 +39,8 @@ class StartReplicationCommand extends Command
                 ConstEventType::MARIA_ANNOTATE_ROWS_EVENT,
             ])
             ->withDatabasesOnly($databases)
-            ->withTablesOnly($tables);
+            ->withTablesOnly($tables)
+            ->withSlaveId(rand());
 
         // @issue https://github.com/mobilestock/backend/issues/639
         $lastBinlogPosition = DB::selectOne('SELECT replicator_configs.json_binlog FROM replicator_configs')['binlog'];
