@@ -13,6 +13,7 @@ use MySQLReplication\Event\DTO\EventDTO;
 use MySQLReplication\Event\DTO\FormatDescriptionEventDTO;
 use MySQLReplication\Event\DTO\HeartbeatDTO;
 use MySQLReplication\Event\DTO\QueryDTO;
+use MySQLReplication\Event\DTO\RowsDTO;
 use MySQLReplication\Event\RowEvent\RowEventFactory;
 use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -81,14 +82,7 @@ class Event
             ))->makeMariaDbGTIDLogDTO();
         }
         if ($eventInfo->type === ConstEventType::MARIA_ANNOTATE_ROWS_EVENT->value) {
-            if (
-                strpos($binaryDataReader->getBinaryData(), self::REPLICATION_QUERY) !== false
-            ) {
-                $this->isReplicated = true;
-                return null;
-            } else {
-                $this->isReplicated = false;
-            }
+            RowsDTO::setCurrentQuery($binaryDataReader->getBinaryData());
         }
 
         // check for ignore and permitted events
