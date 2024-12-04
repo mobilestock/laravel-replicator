@@ -4,7 +4,6 @@ namespace MobileStock\LaravelReplicator;
 
 use DomainException;
 use Illuminate\Support\Facades\DB;
-use MySQLReplication\Event\Event;
 
 class ReplicateSecondaryNodeHandler
 {
@@ -13,9 +12,11 @@ class ReplicateSecondaryNodeHandler
         public string $nodeSecondaryDatabase,
         public string $nodeSecondaryTable,
         public string $nodeSecondaryReferenceKey,
-        public array $columnMappings,
-        public array $row
-    ) {
+        public string $replicatingTag,
+        public array  $columnMappings,
+        public array  $row
+    )
+    {
     }
 
     public function update(): void
@@ -48,9 +49,8 @@ class ReplicateSecondaryNodeHandler
         $sql =
             "UPDATE {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
                         SET {$clausule}
-                        WHERE {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}.{$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey}" .
-            Event::REPLICATION_QUERY .
-            ';';
+                        WHERE
+                            {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}.{$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey} {$this->replicatingTag};";
         $rowCount = DB::update($sql, $binds);
 
         if ($rowCount > 1) {
@@ -72,9 +72,7 @@ class ReplicateSecondaryNodeHandler
         $placeholders = implode(',', array_map(fn($column) => ":{$column}", array_keys($mappedData)));
 
         $sql =
-            "INSERT INTO {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable} ({$columns}) VALUES ({$placeholders})" .
-            Event::REPLICATION_QUERY .
-            ';';
+            "INSERT INTO {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable} ({$columns}) VALUES ({$placeholders}) {$this->replicatingTag};";
 
         DB::insert($sql, $mappedData);
     }
@@ -89,9 +87,7 @@ class ReplicateSecondaryNodeHandler
             "DELETE FROM
                 {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
             WHERE
-                {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}.{$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey}" .
-            Event::REPLICATION_QUERY .
-            ';';
+                {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}.{$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey} {$this->replicatingTag} ;";
 
         $rowCount = DB::delete($sql, $binds);
 

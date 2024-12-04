@@ -20,8 +20,6 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class Event
 {
-    public const REPLICATION_QUERY = '/* isReplicating */';
-
     private const MARIADB_DUMMY_QUERY = '# Dum';
 
     private const EOF_HEADER_VALUE = 254;
