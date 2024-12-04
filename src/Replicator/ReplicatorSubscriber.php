@@ -21,18 +21,20 @@ class ReplicatorSubscriber extends EventSubscribers
             return;
         }
 
-        /** @var RowsDTO $event */
-        $rawQuery = $event->getRawQuery();
-        if ($rawQuery && str_contains($rawQuery, '/* isReplicating */')) {
-            return;
-        }
-
         DB::setDefaultConnection('replicator-bridge');
 
         $database = $event->tableMap->database;
         $table = $event->tableMap->table;
 
-        foreach (Config::get('replicator') as $config) {
+        foreach (Config::get('replicator') as $key => $config) {
+            $replicatingTag = '/* isReplicating(' . $key . ') */';
+
+            /** @var RowsDTO $event */
+            $rawQuery = $event->getRawQuery();
+            if ($rawQuery && str_contains($rawQuery, $replicatingTag)) {
+                continue;
+            }
+
             $nodePrimaryDatabase = $config['node_primary']['database'];
             $nodePrimaryTable = $config['node_primary']['table'];
             $nodeSecondaryDatabase = $config['node_secondary']['database'];
@@ -95,6 +97,7 @@ class ReplicatorSubscriber extends EventSubscribers
                         $nodeSecondaryDatabase,
                         $nodeSecondaryTable,
                         $nodeSecondaryReferenceKey,
+                        $replicatingTag,
                         $columnMappings,
                         $beforeReplicateEvent->rowData
                     );
