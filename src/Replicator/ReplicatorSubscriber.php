@@ -21,6 +21,12 @@ class ReplicatorSubscriber extends EventSubscribers
             return;
         }
 
+        /** @var RowsDTO $event */
+        $rawQuery = $event->getRawQuery();
+        if ($rawQuery && str_contains($rawQuery, '/* isReplicating */')) {
+            return;
+        }
+
         DB::setDefaultConnection('replicator-bridge');
 
         $database = $event->tableMap->database;
