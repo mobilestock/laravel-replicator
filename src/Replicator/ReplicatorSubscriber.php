@@ -75,7 +75,12 @@ class ReplicatorSubscriber extends EventSubscribers
                         $rowData = $row['after'];
                     }
 
-                    $beforeReplicateEvent = new BeforeReplicate($nodePrimaryDatabase, $nodePrimaryTable, $rowData);
+                    $beforeReplicateEvent = new BeforeReplicate(
+                        $nodePrimaryDatabase,
+                        $nodePrimaryTable,
+                        $rowData,
+                        $event
+                    );
                     Event::dispatch($beforeReplicateEvent);
 
                     if ($event instanceof UpdateRowsDTO) {
