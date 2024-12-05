@@ -13,10 +13,9 @@ class ReplicateSecondaryNodeHandler
         public string $nodeSecondaryTable,
         public string $nodeSecondaryReferenceKey,
         public string $replicatingTag,
-        public array  $columnMappings,
-        public array  $row
-    )
-    {
+        public array $columnMappings,
+        public array $row
+    ) {
     }
 
     public function update(): void
@@ -46,8 +45,7 @@ class ReplicateSecondaryNodeHandler
             }, array_keys($changedColumns))
         );
 
-        $sql =
-            "UPDATE {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
+        $sql = "UPDATE {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
                         SET {$clausule}
                         WHERE
                             {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}.{$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey} {$this->replicatingTag};";
@@ -71,8 +69,7 @@ class ReplicateSecondaryNodeHandler
         $columns = implode(',', array_keys($mappedData));
         $placeholders = implode(',', array_map(fn($column) => ":{$column}", array_keys($mappedData)));
 
-        $sql =
-            "INSERT INTO {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable} ({$columns}) VALUES ({$placeholders}) {$this->replicatingTag};";
+        $sql = "INSERT INTO {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable} ({$columns}) VALUES ({$placeholders}) {$this->replicatingTag};";
 
         DB::insert($sql, $mappedData);
     }
@@ -83,11 +80,10 @@ class ReplicateSecondaryNodeHandler
 
         $binds = [":{$this->nodeSecondaryReferenceKey}" => $referenceKeyValue];
 
-        $sql =
-            "DELETE FROM
+        $sql = "DELETE FROM
                 {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
             WHERE
-                {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}.{$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey} {$this->replicatingTag} ;";
+                {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}.{$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey} {$this->replicatingTag};";
 
         $rowCount = DB::delete($sql, $binds);
 
