@@ -9,6 +9,7 @@ use MobileStock\LaravelReplicator\Events\BeforeReplicate;
 use MobileStock\LaravelReplicator\Model\ReplicatorConfig;
 use MySQLReplication\Event\DTO\DeleteRowsDTO;
 use MySQLReplication\Event\DTO\EventDTO;
+use MySQLReplication\Event\DTO\RowsDTO;
 use MySQLReplication\Event\DTO\UpdateRowsDTO;
 use MySQLReplication\Event\DTO\WriteRowsDTO;
 use MySQLReplication\Event\EventSubscribers;
@@ -27,7 +28,7 @@ class ReplicatorSubscriber extends EventSubscribers
         $table = $event->tableMap->table;
 
         foreach (Config::get('replicator') as $key => $config) {
-            $replicatingTag = '/* isReplicating(' . $key . ') */';
+            $replicatingTag = '/* isReplicating(' . gethostname() . '_' . $key . ') */';
 
             /** @var RowsDTO $event */
             $rawQuery = $event->getRawQuery();
