@@ -16,7 +16,7 @@ abstract class RowsDTO extends EventDTO
         self::$currentQuery = $query;
     }
 
-    public function getCurrentQuery(): ?string 
+    public function getRawQuery(): ?string
     {
         return self::$currentQuery;
     }
