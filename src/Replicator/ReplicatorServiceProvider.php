@@ -15,7 +15,7 @@ class ReplicatorServiceProvider extends ServiceProvider
             [
                 __DIR__ . '/../../config/replicator.php' => config_path('replicator.php'),
             ],
-            'replicator-config'
+            'laravel-replicator-config'
         );
 
         $this->mergeConfigFrom(
