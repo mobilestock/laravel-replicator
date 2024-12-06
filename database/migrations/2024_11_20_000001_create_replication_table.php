@@ -16,15 +16,13 @@ return new class extends Migration {
         });
 
         $binlogStatus = DB::selectOne('SHOW MASTER STATUS');
-        $file = $binlogStatus['File'];
-        $position = $binlogStatus['Position'];
         $replicationModel = new ReplicatorConfig();
         // @issue https://github.com/mobilestock/backend/issues/674
         $replicationModel->id = 1;
         // @issue https://github.com/mobilestock/backend/issues/639
         $replicationModel->json_binlog = [
-            'file' => $file,
-            'position' => $position,
+            'file' => $binlogStatus['File'] ?? null,
+            'position' => $binlogStatus['Position'] ?? null,
         ];
         $replicationModel->save();
     }
