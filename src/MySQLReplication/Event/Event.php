@@ -10,9 +10,9 @@ use MySQLReplication\BinLog\BinLogSocketConnect;
 use MySQLReplication\Config\Config;
 use MySQLReplication\Definitions\ConstEventType;
 use MySQLReplication\Event\DTO\EventDTO;
+use MySQLReplication\Event\DTO\MariaDbAnnotateRowsDTO;
 use MySQLReplication\Event\DTO\FormatDescriptionEventDTO;
 use MySQLReplication\Event\DTO\HeartbeatDTO;
-use MySQLReplication\Event\DTO\MariaDbAnnotateRowsDTO;
 use MySQLReplication\Event\DTO\QueryDTO;
 use MySQLReplication\Event\RowEvent\RowEventFactory;
 use Psr\SimpleCache\CacheInterface;
@@ -23,7 +23,6 @@ class Event
     private const MARIADB_DUMMY_QUERY = '# Dum';
 
     private const EOF_HEADER_VALUE = 254;
-    private bool $isReplicated = false;
 
     public function __construct(
         private readonly BinLogSocketConnect $binLogSocketConnect,
@@ -55,7 +54,8 @@ class Event
         // we always need these events to clean table maps and for BinLogCurrent class to keep track of binlog position
         // always parse table map event but propagate when needed (we need this for creating table cache)
         if ($eventInfo->type === ConstEventType::TABLE_MAP_EVENT->value) {
-            return $this->rowEventFactory->makeRowEvent($binaryDataReader, $eventInfo)->makeTableMapDTO();
+            return $this->rowEventFactory->makeRowEvent($binaryDataReader, $eventInfo)
+                ->makeTableMapDTO();
         }
 
         if ($eventInfo->type === ConstEventType::ROTATE_EVENT->value) {
@@ -78,43 +78,41 @@ class Event
                 $this->binLogServerInfo
             ))->makeMariaDbGTIDLogDTO();
         }
+
         if ($eventInfo->type === ConstEventType::MARIA_ANNOTATE_ROWS_EVENT->value) {
             return new MariaDbAnnotateRowsDTO($eventInfo, $binaryDataReader->getBinaryData());
         }
 
         // check for ignore and permitted events
-        if ($this->ignoreEvent($eventInfo->type) || $this->isReplicated) {
+        if ($this->ignoreEvent($eventInfo->type)) {
             return null;
         }
 
-        if (
-            in_array(
-                $eventInfo->type,
-                [ConstEventType::UPDATE_ROWS_EVENT_V1->value, ConstEventType::UPDATE_ROWS_EVENT_V2->value],
-                true
-            )
-        ) {
-            return $this->rowEventFactory->makeRowEvent($binaryDataReader, $eventInfo)->makeUpdateRowsDTO();
+        if (in_array(
+            $eventInfo->type,
+            [ConstEventType::UPDATE_ROWS_EVENT_V1->value, ConstEventType::UPDATE_ROWS_EVENT_V2->value],
+            true
+        )) {
+            return $this->rowEventFactory->makeRowEvent($binaryDataReader, $eventInfo)
+                ->makeUpdateRowsDTO();
         }
 
-        if (
-            in_array(
-                $eventInfo->type,
-                [ConstEventType::WRITE_ROWS_EVENT_V1->value, ConstEventType::WRITE_ROWS_EVENT_V2->value],
-                true
-            )
-        ) {
-            return $this->rowEventFactory->makeRowEvent($binaryDataReader, $eventInfo)->makeWriteRowsDTO();
+        if (in_array(
+            $eventInfo->type,
+            [ConstEventType::WRITE_ROWS_EVENT_V1->value, ConstEventType::WRITE_ROWS_EVENT_V2->value],
+            true
+        )) {
+            return $this->rowEventFactory->makeRowEvent($binaryDataReader, $eventInfo)
+                ->makeWriteRowsDTO();
         }
 
-        if (
-            in_array(
-                $eventInfo->type,
-                [ConstEventType::DELETE_ROWS_EVENT_V1->value, ConstEventType::DELETE_ROWS_EVENT_V2->value],
-                true
-            )
-        ) {
-            return $this->rowEventFactory->makeRowEvent($binaryDataReader, $eventInfo)->makeDeleteRowsDTO();
+        if (in_array(
+            $eventInfo->type,
+            [ConstEventType::DELETE_ROWS_EVENT_V1->value, ConstEventType::DELETE_ROWS_EVENT_V2->value],
+            true
+        )) {
+            return $this->rowEventFactory->makeRowEvent($binaryDataReader, $eventInfo)
+                ->makeDeleteRowsDTO();
         }
 
         if ($eventInfo->type === ConstEventType::XID_EVENT->value) {
@@ -149,7 +147,7 @@ class Event
             $binaryDataReader->readUInt8(),
             $binaryDataReader->readInt32(),
             $binaryDataReader->readInt32(),
-            (string) $binaryDataReader->readInt32(),
+            (string)$binaryDataReader->readInt32(),
             $binaryDataReader->readUInt16(),
             $this->binLogSocketConnect->getCheckSum(),
             $this->binLogSocketConnect->getBinLogCurrent()
