@@ -46,7 +46,7 @@ abstract class RowsDTO extends EventDTO
     public function __get(string $name)
     {
         if ($name === 'rawQuery') {
-            return $this->getCurrentQuery();
+            return $this->getRawQuery();
         }
         throw new \RuntimeException("Property {$name} does not exist");
     }
