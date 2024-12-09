@@ -12,8 +12,8 @@ use MySQLReplication\Definitions\ConstEventType;
 use MySQLReplication\Event\DTO\EventDTO;
 use MySQLReplication\Event\DTO\FormatDescriptionEventDTO;
 use MySQLReplication\Event\DTO\HeartbeatDTO;
+use MySQLReplication\Event\DTO\MariaDbAnnotateRowsDTO;
 use MySQLReplication\Event\DTO\QueryDTO;
-use MySQLReplication\Event\DTO\RowsDTO;
 use MySQLReplication\Event\RowEvent\RowEventFactory;
 use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -81,6 +81,7 @@ class Event
         }
         if ($eventInfo->type === ConstEventType::MARIA_ANNOTATE_ROWS_EVENT->value) {
             RowsDTO::setCurrentQuery($binaryDataReader->getBinaryData());
+            return new MariaDbAnnotateRowsDTO($eventInfo, $binaryDataReader->getBinaryData());
         }
 
         // check for ignore and permitted events

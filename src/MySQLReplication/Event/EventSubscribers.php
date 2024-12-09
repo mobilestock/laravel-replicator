@@ -10,6 +10,7 @@ use MySQLReplication\Event\DTO\EventDTO;
 use MySQLReplication\Event\DTO\FormatDescriptionEventDTO;
 use MySQLReplication\Event\DTO\GTIDLogDTO;
 use MySQLReplication\Event\DTO\HeartbeatDTO;
+use MySQLReplication\Event\DTO\MariaDbAnnotateRowsDTO;
 use MySQLReplication\Event\DTO\MariaDbGtidLogDTO;
 use MySQLReplication\Event\DTO\QueryDTO;
 use MySQLReplication\Event\DTO\RotateDTO;
@@ -37,6 +38,7 @@ class EventSubscribers implements EventSubscriberInterface
             ConstEventsNames::FORMAT_DESCRIPTION->value => 'onFormatDescription',
             ConstEventsNames::HEARTBEAT->value => 'onHeartbeat',
             ConstEventsNames::ROWS_QUERY->value => 'onRowsQuery',
+            ConstEventsNames::MARIA_ANNOTATE_ROWS_EVENT->value => 'onMariaDbAnnotateRows'
         ];
     }
 
@@ -96,6 +98,11 @@ class EventSubscribers implements EventSubscriberInterface
     }
 
     public function onRowsQuery(RowsQueryDTO $event): void
+    {
+        $this->allEvents($event);
+    }
+    
+    public function onMariaDbAnnotateRows(MariaDbAnnotateRowsDTO $event): void
     {
         $this->allEvents($event);
     }

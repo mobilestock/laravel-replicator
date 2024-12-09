@@ -18,4 +18,5 @@ enum ConstEventsNames: string
     case WRITE = 'write';
     case FORMAT_DESCRIPTION = 'format description';
     case ROWS_QUERY = 'rows_query';
+    case MARIA_ANNOTATE_ROWS_EVENT = 'maria annotate rows event';
 }

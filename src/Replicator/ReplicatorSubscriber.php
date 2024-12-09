@@ -9,15 +9,21 @@ use MobileStock\LaravelReplicator\Events\BeforeReplicate;
 use MobileStock\LaravelReplicator\Model\ReplicatorConfig;
 use MySQLReplication\Event\DTO\DeleteRowsDTO;
 use MySQLReplication\Event\DTO\EventDTO;
-use MySQLReplication\Event\DTO\RowsDTO;
+use MySQLReplication\Event\DTO\MariaDbAnnotateRowsDTO;
 use MySQLReplication\Event\DTO\UpdateRowsDTO;
 use MySQLReplication\Event\DTO\WriteRowsDTO;
 use MySQLReplication\Event\EventSubscribers;
 
 class ReplicatorSubscriber extends EventSubscribers
 {
-    public function allEvents(EventDTO $event): void
+    protected string $query;
+
+    public function allEvents(EventDTO|MariaDbAnnotateRowsDTO $event): void
     {
+        if ($event instanceof MariaDbAnnotateRowsDTO) {
+            $this->query = $event->query;
+            return;
+        }
         if (!($event instanceof WriteRowsDTO || $event instanceof UpdateRowsDTO || $event instanceof DeleteRowsDTO)) {
             return;
         }
@@ -30,9 +36,7 @@ class ReplicatorSubscriber extends EventSubscribers
         foreach (Config::get('replicator') as $key => $config) {
             $replicatingTag = '/* isReplicating(' . gethostname() . '_' . $key . ') */';
 
-            /** @var RowsDTO $event */
-            $rawQuery = $event->getRawQuery();
-            if ($rawQuery && str_contains($rawQuery, $replicatingTag)) {
+            if (str_contains($this->query, $replicatingTag)) {
                 continue;
             }
 
