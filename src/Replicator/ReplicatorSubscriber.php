@@ -85,6 +85,8 @@ class ReplicatorSubscriber extends EventSubscribers
                     $beforeReplicateEvent = new BeforeReplicate(
                         $nodePrimaryDatabase,
                         $nodePrimaryTable,
+                        $nodeSecondaryDatabase,
+                        $nodeSecondaryTable,
                         $rowData,
                         $event
                     );
