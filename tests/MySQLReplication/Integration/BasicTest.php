@@ -10,6 +10,7 @@ namespace Tests\MySQLReplication\Integration;
 
 use MySQLReplication\Definitions\ConstEventType;
 use MySQLReplication\Event\DTO\DeleteRowsDTO;
+use MySQLReplication\Event\DTO\MariaDbAnnotateRowsDTO;
 use MySQLReplication\Event\DTO\QueryDTO;
 use MySQLReplication\Event\DTO\RotateDTO;
 use MySQLReplication\Event\DTO\TableMapDTO;
@@ -30,6 +31,7 @@ test('Should get delete event', function () {
 
     expect($this->getEvent())->toBeInstanceOf(XidDTO::class);
     expect($this->getEvent())->toBeInstanceOf(QueryDTO::class);
+    expect($this->getEvent())->toBeInstanceOf(MariaDbAnnotateRowsDTO::class);
     expect($this->getEvent())->toBeInstanceOf(TableMapDTO::class);
 
     /** @var DeleteRowsDTO $event */
@@ -49,6 +51,7 @@ test('Should get update event', function () {
 
     expect($this->getEvent())->toBeInstanceOf(XidDTO::class);
     expect($this->getEvent())->toBeInstanceOf(QueryDTO::class);
+    expect($this->getEvent())->toBeInstanceOf(MariaDbAnnotateRowsDTO::class);
     expect($this->getEvent())->toBeInstanceOf(TableMapDTO::class);
 
     /** @var UpdateRowsDTO $event */
@@ -74,6 +77,9 @@ test('Should get write event drop table', function () {
     $event = $this->getEvent();
     expect($event)->toBeInstanceOf(QueryDTO::class);
     expect($event->query)->toEqual('BEGIN');
+
+    /** @var MariaDbAnnotateRowsDTO $event */
+    expect($this->getEvent())->toBeInstanceOf(MariaDbAnnotateRowsDTO::class);
 
     /** @var TableMapDTO $event */
     expect($this->getEvent())->toBeInstanceOf(TableMapDTO::class);
@@ -225,6 +231,7 @@ test('Should JSON_SET partial update with holes', function () {
 
     expect($this->getEvent())->toBeInstanceOf(XidDTO::class);
     expect($this->getEvent())->toBeInstanceOf(QueryDTO::class);
+    expect($this->getEvent())->toBeInstanceOf(MariaDbAnnotateRowsDTO::class);
     expect($this->getEvent())->toBeInstanceOf(TableMapDTO::class);
 
     /** @var UpdateRowsDTO $event */
@@ -253,6 +260,7 @@ test('Should JSON_REMOVE partial update with holes', function () {
 
     expect($this->getEvent())->toBeInstanceOf(XidDTO::class);
     expect($this->getEvent())->toBeInstanceOf(QueryDTO::class);
+    expect($this->getEvent())->toBeInstanceOf(MariaDbAnnotateRowsDTO::class);
     expect($this->getEvent())->toBeInstanceOf(TableMapDTO::class);
 
     /** @var UpdateRowsDTO $event */
@@ -281,6 +289,7 @@ test('Should JSON_REPLACE partial update with holes', function () {
 
     expect($this->getEvent())->toBeInstanceOf(XidDTO::class);
     expect($this->getEvent())->toBeInstanceOf(QueryDTO::class);
+    expect($this->getEvent())->toBeInstanceOf(MariaDbAnnotateRowsDTO::class);
     expect($this->getEvent())->toBeInstanceOf(TableMapDTO::class);
 
     /** @var UpdateRowsDTO $event */

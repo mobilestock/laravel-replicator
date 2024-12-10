@@ -7,6 +7,7 @@ use MySQLReplication\Config\ConfigBuilder;
 use MySQLReplication\Definitions\ConstEventType;
 use MySQLReplication\Event\DTO\EventDTO;
 use MySQLReplication\Event\DTO\FormatDescriptionEventDTO;
+use MySQLReplication\Event\DTO\MariaDbAnnotateRowsDTO;
 use MySQLReplication\Event\DTO\QueryDTO;
 use MySQLReplication\Event\DTO\RotateDTO;
 use MySQLReplication\Event\DTO\TableMapDTO;
@@ -115,6 +116,7 @@ abstract class BaseCase extends TestCase
 
         $this->assertInstanceOf(QueryDTO::class, $this->getEvent());
         $this->assertInstanceOf(QueryDTO::class, $this->getEvent());
+        $this->assertInstanceOf(MariaDbAnnotateRowsDTO::class, $this->getEvent());
         $this->assertInstanceOf(TableMapDTO::class, $this->getEvent());
 
         return $this->getEvent();
