@@ -3,6 +3,7 @@
 namespace MobileStock\LaravelReplicator\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use MobileStock\LaravelReplicator\Model\ReplicatorConfig;
@@ -62,7 +63,7 @@ class StartReplicationCommand extends Command
             $this->info('Replication process has been started');
             $replication->run();
         } catch (BinLogException $exception) {
-            if ($exception->getCode() === 1236 && App::isProduction()) {
+            if ($exception->getCode() === 1236 && !App::isProduction()) {
                 $binlogStatus = DB::selectOne('SHOW MASTER STATUS');
                 $file = $binlogStatus['File'];
                 $position = $binlogStatus['Position'];
