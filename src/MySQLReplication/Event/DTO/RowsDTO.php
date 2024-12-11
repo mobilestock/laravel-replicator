@@ -9,18 +9,6 @@ use MySQLReplication\Event\RowEvent\TableMap;
 
 abstract class RowsDTO extends EventDTO
 {
-    private static ?string $currentQuery = null;
-
-    public static function setCurrentQuery(?string $query): void 
-    {
-        self::$currentQuery = $query;
-    }
-
-    public function getRawQuery(): ?string
-    {
-        return self::$currentQuery;
-    }
-
     public function __construct(
         EventInfo $eventInfo,
         public readonly TableMap $tableMap,
@@ -41,14 +29,6 @@ abstract class RowsDTO extends EventDTO
             'Affected columns: ' . $this->tableMap->columnsAmount . PHP_EOL .
             'Changed rows: ' . $this->changedRows . PHP_EOL .
             'Values: ' . print_r($this->values, true) . PHP_EOL;
-    }
-
-    public function __get(string $name)
-    {
-        if ($name === 'rawQuery') {
-            return $this->getRawQuery();
-        }
-        throw new \RuntimeException("Property {$name} does not exist");
     }
 
     public function jsonSerialize(): array

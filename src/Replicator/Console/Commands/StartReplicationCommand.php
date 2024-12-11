@@ -2,12 +2,12 @@
 
 namespace MobileStock\LaravelReplicator\Console\Commands;
 
-use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use MobileStock\LaravelReplicator\Model\ReplicatorConfig;
 use MobileStock\LaravelReplicator\ReplicatorSubscriber;
+use MySQLReplication\BinLog\BinLogException;
 use MySQLReplication\Config\ConfigBuilder;
 use MySQLReplication\Definitions\ConstEventType;
 use MySQLReplication\MySQLReplicationFactory;
@@ -19,9 +19,7 @@ class StartReplicationCommand extends Command
 
     public function handle(): void
     {
-
         try {
-
             DB::setDefaultConnection('replicator-bridge');
 
             $databases = [];
@@ -48,7 +46,9 @@ class StartReplicationCommand extends Command
                 ->withSlaveId(rand());
 
             // @issue https://github.com/mobilestock/backend/issues/639
-            $lastBinlogPosition = DB::selectOne('SELECT replicator_configs.json_binlog FROM replicator_configs')['binlog'];
+            $lastBinlogPosition = DB::selectOne('SELECT replicator_configs.json_binlog FROM replicator_configs')[
+                'binlog'
+            ];
 
             if (!empty($lastBinlogPosition['file']) && !empty($lastBinlogPosition['position'])) {
                 $builder
@@ -61,10 +61,8 @@ class StartReplicationCommand extends Command
             $replication->registerSubscriber($registrationSubscriber);
             $this->info('Replication process has been started');
             $replication->run();
-
-        } catch (Exception $error) {
-
-            if ($error->getCode() === 1236 && app()->environment() !== 'production') {
+        } catch (BinLogException $exception) {
+            if ($exception->getCode() === 1236 && App::isProduction()) {
                 $binlogStatus = DB::selectOne('SHOW MASTER STATUS');
                 $file = $binlogStatus['File'];
                 $position = $binlogStatus['Position'];
@@ -81,11 +79,7 @@ class StartReplicationCommand extends Command
                 return;
             }
 
-            $this->error('Replication process has been stopped with this code: ' . $error->getCode());
-            $this->error($error->getMessage());
-            return;
+            throw $exception;
         }
-
-
     }
 }
