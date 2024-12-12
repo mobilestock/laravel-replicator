@@ -80,7 +80,7 @@ class Event
         }
 
         if ($eventInfo->type === ConstEventType::MARIA_ANNOTATE_ROWS_EVENT->value) {
-            return new MariaDbAnnotateRowsDTO($eventInfo, $binaryDataReader->getBinaryData());
+            return new MariaDbAnnotateRowsDTO($eventInfo, $binaryDataReader->read($eventInfo->getSizeNoHeader()));
         }
 
         // check for ignore and permitted events
