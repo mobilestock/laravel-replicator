@@ -27,8 +27,8 @@ class StartReplicationCommand extends Command
             $tables = [];
 
             foreach (Config::get('replicator') as $config) {
-                $databases = [$config['node_primary']['database'], $config['node_secondary']['database']];
-                $tables = array_merge($tables, [$config['node_primary']['table'], $config['node_secondary']['table']]);
+                array_push($databases, $config['node_primary']['database'], $config['node_secondary']['database']);
+                array_push($tables, $config['node_primary']['table'], $config['node_secondary']['table']);
             }
 
             $builder = (new ConfigBuilder())
@@ -42,8 +42,8 @@ class StartReplicationCommand extends Command
                     ConstEventType::DELETE_ROWS_EVENT_V1,
                     ConstEventType::MARIA_ANNOTATE_ROWS_EVENT,
                 ])
-                ->withDatabasesOnly($databases)
-                ->withTablesOnly($tables)
+                ->withDatabasesOnly(array_unique($databases))
+                ->withTablesOnly(array_unique($tables))
                 ->withSlaveId(rand());
 
             // @issue https://github.com/mobilestock/backend/issues/639
