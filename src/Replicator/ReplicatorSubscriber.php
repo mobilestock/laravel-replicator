@@ -33,8 +33,24 @@ class ReplicatorSubscriber extends EventSubscribers
         $database = $event->tableMap->database;
         $table = $event->tableMap->table;
 
-        foreach (Config::get('replicator') as $key => $config) {
-            $replicatingTag = '/* isReplicating(' . gethostname() . '_' . $key . ') */';
+        $configs = Config::get('replicator');
+        $rules = $this->replicatorRulesNomeProvisorio($configs, $database, $table);
+
+        if (preg_match('/\/\* isReplicating\((.*?)\) \*\//', $this->query, $matches)) {
+            $tagInfo = explode('_', $matches[1]);
+            $hostname = $tagInfo[0];
+            $ignoredConfigs = array_slice($tagInfo, 1);
+
+            // Se o hostname é o mesmo e a config atual está nos ignorados, pula
+            if ($hostname === gethostname() && !empty(array_intersect($rules['ignored'], $ignoredConfigs))) {
+                return;
+            }
+        }
+
+        foreach ($rules['accepted'] as $configKey) {
+            $config = $configs[$configKey];
+
+            $replicatingTag = sprintf('/* isReplicating(%s_%s) */', gethostname(), implode('_', $rules['ignored']));
 
             if (str_contains($this->query, $replicatingTag)) {
                 continue;
@@ -165,5 +181,63 @@ class ReplicatorSubscriber extends EventSubscribers
         }
 
         return !empty(array_intersect($configuredColumns, $changedColumns));
+    }
+
+    /**
+     * Analisa as configurações para determinar quais devem ser processadas e quais devem ser ignoradas
+     * para evitar loops de replicação
+     */
+    private function replicatorRulesNomeProvisorio(array $configs, string $database, string $table): array
+    {
+        $acceptedConfigs = [];
+        $ignoredConfigs = [];
+        $relatedNodes = [];
+
+        foreach ($configs as $configKey => $config) {
+            $isPrimary =
+                $config['node_primary']['database'] === $database && $config['node_primary']['table'] === $table;
+
+            $isSecondary =
+                $config['node_secondary']['database'] === $database && $config['node_secondary']['table'] === $table;
+
+            if ($isPrimary || $isSecondary) {
+                $acceptedConfigs[] = $configKey;
+
+                $relatedNodes[] = [
+                    'database' => $config['node_primary']['database'],
+                    'table' => $config['node_primary']['table'],
+                ];
+                $relatedNodes[] = [
+                    'database' => $config['node_secondary']['database'],
+                    'table' => $config['node_secondary']['table'],
+                ];
+            }
+        }
+
+        foreach ($configs as $configKey => $config) {
+            if (in_array($configKey, $acceptedConfigs)) {
+                continue;
+            }
+
+            foreach ($relatedNodes as $node) {
+                $involvesPrimaryNode =
+                    $config['node_primary']['database'] === $node['database'] &&
+                    $config['node_primary']['table'] === $node['table'];
+
+                $involvesSecondaryNode =
+                    $config['node_secondary']['database'] === $node['database'] &&
+                    $config['node_secondary']['table'] === $node['table'];
+
+                if ($involvesPrimaryNode || $involvesSecondaryNode) {
+                    $ignoredConfigs[] = $configKey;
+                    break;
+                }
+            }
+        }
+
+        return [
+            'accepted' => array_unique($acceptedConfigs),
+            'ignored' => array_unique($ignoredConfigs),
+        ];
     }
 }
