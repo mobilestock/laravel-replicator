@@ -27,40 +27,20 @@ class ReplicatorSubscriber extends EventSubscribers
         if (!($event instanceof WriteRowsDTO || $event instanceof UpdateRowsDTO || $event instanceof DeleteRowsDTO)) {
             return;
         }
-
         DB::setDefaultConnection('replicator-bridge');
-
         $database = $event->tableMap->database;
         $table = $event->tableMap->table;
 
-        $configs = Config::get('replicator');
-        $rules = $this->replicatorRulesNomeProvisorio($configs, $database, $table);
-
-        if (preg_match('/\/\* isReplicating\((.*?)\) \*\//', $this->query, $matches)) {
-            $tagInfo = explode('_', $matches[1]);
-            $hostname = $tagInfo[0];
-            $ignoredConfigs = array_slice($tagInfo, 1);
-
-            // Se o hostname é o mesmo e a config atual está nos ignorados, pula
-            if ($hostname === gethostname() && !empty(array_intersect($rules['ignored'], $ignoredConfigs))) {
-                return;
-            }
-        }
-
-        foreach ($rules['accepted'] as $configKey) {
-            $config = $configs[$configKey];
-
-            $replicatingTag = sprintf('/* isReplicating(%s_%s) */', gethostname(), implode('_', $rules['ignored']));
+        foreach (Config::get('replicator') as $key => $config) {
+            $replicatingTag = '/* isReplicating(' . gethostname() . '_' . $key . ') */';
 
             if (str_contains($this->query, $replicatingTag)) {
                 continue;
             }
-
             $nodePrimaryDatabase = $config['node_primary']['database'];
             $nodePrimaryTable = $config['node_primary']['table'];
             $nodeSecondaryDatabase = $config['node_secondary']['database'];
             $nodeSecondaryTable = $config['node_secondary']['table'];
-
             if (
                 ($database === $nodePrimaryDatabase && $table === $nodePrimaryTable) ||
                 ($database === $nodeSecondaryDatabase && $table === $nodeSecondaryTable)
@@ -77,27 +57,21 @@ class ReplicatorSubscriber extends EventSubscribers
                     $nodeSecondaryConfig = $config['node_primary'];
                     $columnMappings = array_flip($config['columns']);
                 }
-
                 if (!$this->checkChangedColumns($event, array_keys($columnMappings))) {
                     continue;
                 }
-
                 $nodePrimaryReferenceKey = $nodePrimaryConfig['reference_key'];
                 $nodeSecondaryDatabase = $nodeSecondaryConfig['database'];
                 $nodeSecondaryTable = $nodeSecondaryConfig['table'];
                 $nodeSecondaryReferenceKey = $nodeSecondaryConfig['reference_key'];
-
                 foreach ($event->values as $row) {
                     DB::beginTransaction();
-
                     $rowData = $row;
-
                     if ($event instanceof WriteRowsDTO) {
                         $columnMappings[$nodePrimaryReferenceKey] = $nodeSecondaryReferenceKey;
                     } elseif ($event instanceof UpdateRowsDTO) {
                         $rowData = $row['after'];
                     }
-
                     $beforeReplicateEvent = new BeforeReplicate(
                         $nodePrimaryDatabase,
                         $nodePrimaryTable,
@@ -107,14 +81,12 @@ class ReplicatorSubscriber extends EventSubscribers
                         $event
                     );
                     Event::dispatch($beforeReplicateEvent);
-
                     if ($event instanceof UpdateRowsDTO) {
                         $beforeReplicateEvent->rowData = [
                             'before' => $row['before'],
                             'after' => $beforeReplicateEvent->rowData,
                         ];
                     }
-
                     $databaseHandler = new ReplicateSecondaryNodeHandler(
                         $nodePrimaryReferenceKey,
                         $nodeSecondaryDatabase,
@@ -124,25 +96,20 @@ class ReplicatorSubscriber extends EventSubscribers
                         $columnMappings,
                         $beforeReplicateEvent->rowData
                     );
-
                     switch ($event::class) {
                         case UpdateRowsDTO::class:
                             $databaseHandler->update();
                             break;
-
                         case WriteRowsDTO::class:
                             $databaseHandler->insert();
                             break;
-
                         case DeleteRowsDTO::class:
                             $databaseHandler->delete();
                             break;
                     }
                     DB::commit();
                 }
-
                 $binLogInfo = $event->getEventInfo()->binLogCurrent;
-
                 $replicationModel = new ReplicatorConfig();
                 $replicationModel->exists = true;
                 $replicationModel->id = 1;
@@ -159,7 +126,6 @@ class ReplicatorSubscriber extends EventSubscribers
     public function checkChangedColumns(EventDTO $event, array $configuredColumns): bool
     {
         $changedColumns = [];
-
         foreach ($event->values as $row) {
             switch ($event::class) {
                 case UpdateRowsDTO::class:
@@ -181,63 +147,5 @@ class ReplicatorSubscriber extends EventSubscribers
         }
 
         return !empty(array_intersect($configuredColumns, $changedColumns));
-    }
-
-    /**
-     * Analisa as configurações para determinar quais devem ser processadas e quais devem ser ignoradas
-     * para evitar loops de replicação
-     */
-    private function replicatorRulesNomeProvisorio(array $configs, string $database, string $table): array
-    {
-        $acceptedConfigs = [];
-        $ignoredConfigs = [];
-        $relatedNodes = [];
-
-        foreach ($configs as $configKey => $config) {
-            $isPrimary =
-                $config['node_primary']['database'] === $database && $config['node_primary']['table'] === $table;
-
-            $isSecondary =
-                $config['node_secondary']['database'] === $database && $config['node_secondary']['table'] === $table;
-
-            if ($isPrimary || $isSecondary) {
-                $acceptedConfigs[] = $configKey;
-
-                $relatedNodes[] = [
-                    'database' => $config['node_primary']['database'],
-                    'table' => $config['node_primary']['table'],
-                ];
-                $relatedNodes[] = [
-                    'database' => $config['node_secondary']['database'],
-                    'table' => $config['node_secondary']['table'],
-                ];
-            }
-        }
-
-        foreach ($configs as $configKey => $config) {
-            if (in_array($configKey, $acceptedConfigs)) {
-                continue;
-            }
-
-            foreach ($relatedNodes as $node) {
-                $involvesPrimaryNode =
-                    $config['node_primary']['database'] === $node['database'] &&
-                    $config['node_primary']['table'] === $node['table'];
-
-                $involvesSecondaryNode =
-                    $config['node_secondary']['database'] === $node['database'] &&
-                    $config['node_secondary']['table'] === $node['table'];
-
-                if ($involvesPrimaryNode || $involvesSecondaryNode) {
-                    $ignoredConfigs[] = $configKey;
-                    break;
-                }
-            }
-        }
-
-        return [
-            'accepted' => array_unique($acceptedConfigs),
-            'ignored' => array_unique($ignoredConfigs),
-        ];
     }
 }
