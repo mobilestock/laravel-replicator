@@ -68,19 +68,28 @@ class ReplicateSecondaryNodeHandler
 
         $referenceKeyValue = $this->row[$this->nodePrimaryReferenceKey];
 
-        $checkData = DB::selectOne(
-            "SELECT {$this->nodePrimaryReferenceKey} FROM {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable} WHERE {$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey}",
-            [":{$this->nodeSecondaryReferenceKey}" => $referenceKeyValue]
-        );
+        $columns = implode(',', array_keys($mappedData));
+        $values = implode(',', array_map(fn($column) => ":insert_{$column}", array_keys($mappedData)));
 
-        if (empty($checkData)) {
-            $columns = implode(',', array_keys($mappedData));
-            $placeholders = implode(',', array_map(fn($column) => ":{$column}", array_keys($mappedData)));
+        $sql = "
+                INSERT INTO {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable} ({$columns})
+                SELECT {$values}
+                FROM DUAL
+                WHERE NOT EXISTS (
+                    SELECT 1 
+                    FROM {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
+                    WHERE {$this->nodeSecondaryReferenceKey} = :from_dual{$this->nodeSecondaryReferenceKey}
+                )
+                {$this->replicatingTag};
+    ";
 
-            $sql = "INSERT INTO {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable} ({$columns}) VALUES ({$placeholders}) {$this->replicatingTag};";
-
-            DB::insert($sql, $mappedData);
+        $preparedParams = [];
+        foreach ($mappedData as $column => $value) {
+            $preparedParams[":insert_{$column}"] = $value;
         }
+        $preparedParams[":from_dual{$this->nodeSecondaryReferenceKey}"] = $referenceKeyValue;
+
+        DB::insert($sql, $preparedParams);
     }
 
     public function delete(): void
