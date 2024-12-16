@@ -66,12 +66,21 @@ class ReplicateSecondaryNodeHandler
             $mappedData[$this->columnMappings[$column]] = $value;
         }
 
-        $columns = implode(',', array_keys($mappedData));
-        $placeholders = implode(',', array_map(fn($column) => ":{$column}", array_keys($mappedData)));
+        $referenceKeyValue = $this->row[$this->nodePrimaryReferenceKey];
 
-        $sql = "INSERT INTO {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable} ({$columns}) VALUES ({$placeholders}) {$this->replicatingTag};";
+        $checkData = DB::selectOne(
+            "SELECT {$this->nodePrimaryReferenceKey} FROM {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable} WHERE {$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey}",
+            [":{$this->nodeSecondaryReferenceKey}" => $referenceKeyValue]
+        );
 
-        DB::insert($sql, $mappedData);
+        if (empty($checkData)) {
+            $columns = implode(',', array_keys($mappedData));
+            $placeholders = implode(',', array_map(fn($column) => ":{$column}", array_keys($mappedData)));
+
+            $sql = "INSERT INTO {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable} ({$columns}) VALUES ({$placeholders}) {$this->replicatingTag};";
+
+            DB::insert($sql, $mappedData);
+        }
     }
 
     public function delete(): void
