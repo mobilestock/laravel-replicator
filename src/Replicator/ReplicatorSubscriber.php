@@ -34,13 +34,12 @@ class ReplicatorSubscriber extends EventSubscribers
         $table = $event->tableMap->table;
 
         foreach (Config::get('replicator') as $key => $config) {
-
             $replicatingTag = '/* isReplicating(' . gethostname() . '_' . $key . ') */';
 
             if (str_contains($this->query, $replicatingTag)) {
                 continue;
             }
-            
+
             $nodePrimaryDatabase = $config['node_primary']['database'];
             $nodePrimaryTable = $config['node_primary']['table'];
             $nodeSecondaryDatabase = $config['node_secondary']['database'];
@@ -67,6 +66,8 @@ class ReplicatorSubscriber extends EventSubscribers
                     continue;
                 }
 
+                $nodePrimaryDatabase = $nodePrimaryConfig['database'];
+                $nodePrimaryTable = $nodePrimaryConfig['table'];
                 $nodePrimaryReferenceKey = $nodePrimaryConfig['reference_key'];
                 $nodeSecondaryDatabase = $nodeSecondaryConfig['database'];
                 $nodeSecondaryTable = $nodeSecondaryConfig['table'];
