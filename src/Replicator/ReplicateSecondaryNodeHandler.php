@@ -66,10 +66,8 @@ class ReplicateSecondaryNodeHandler
             $mappedData[$this->columnMappings[$column]] = $value;
         }
 
-        $referenceKeyValue = $this->row[$this->nodePrimaryReferenceKey];
-
         $columns = implode(',', array_keys($mappedData));
-        $values = implode(',', array_map(fn($column) => ":insert_{$column}", array_keys($mappedData)));
+        $values = implode(',', array_map(fn($column) => ":{$column}", array_keys($mappedData)));
 
         $sql = "
                 INSERT INTO {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable} ({$columns})
@@ -78,18 +76,12 @@ class ReplicateSecondaryNodeHandler
                 WHERE NOT EXISTS (
                     SELECT 1 
                     FROM {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
-                    WHERE {$this->nodeSecondaryReferenceKey} = :from_dual{$this->nodeSecondaryReferenceKey}
+                    WHERE {$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey}
                 )
                 {$this->replicatingTag};
     ";
 
-        $preparedParams = [];
-        foreach ($mappedData as $column => $value) {
-            $preparedParams[":insert_{$column}"] = $value;
-        }
-        $preparedParams[":from_dual{$this->nodeSecondaryReferenceKey}"] = $referenceKeyValue;
-
-        DB::insert($sql, $preparedParams);
+        DB::insert($sql, $mappedData);
     }
 
     public function delete(): void
