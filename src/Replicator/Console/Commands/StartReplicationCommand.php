@@ -27,7 +27,7 @@ class StartReplicationCommand extends Command
             $tables = [];
 
             foreach (Config::get('replicator') as $config) {
-                array_push($databases, $config['node_primary']['database'], $config['node_secondary']['database']);
+                $databases += [$config['node_primary']['database'], $config['node_secondary']['database']];
                 array_push($tables, $config['node_primary']['table'], $config['node_secondary']['table']);
             }
 
