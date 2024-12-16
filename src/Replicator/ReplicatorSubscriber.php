@@ -16,7 +16,7 @@ use MySQLReplication\Event\EventSubscribers;
 
 class ReplicatorSubscriber extends EventSubscribers
 {
-    protected string $query;
+    public string $query;
 
     public function allEvents(EventDTO|MariaDbAnnotateRowsDTO $event): void
     {
@@ -27,62 +27,25 @@ class ReplicatorSubscriber extends EventSubscribers
         if (!($event instanceof WriteRowsDTO || $event instanceof UpdateRowsDTO || $event instanceof DeleteRowsDTO)) {
             return;
         }
+
         DB::setDefaultConnection('replicator-bridge');
+
         $database = $event->tableMap->database;
         $table = $event->tableMap->table;
-        $configs = Config::get('replicator');
 
-        $configsWithPrimaryNode = array_filter(
-            $configs,
-            fn($config) => $config['node_primary']['table'] === $table || $config['node_secondary']['table'] === $table
-        );
+        foreach (Config::get('replicator') as $key => $config) {
 
-        $firstStep = [];
-        foreach ($configsWithPrimaryNode as $config) {
-            if ($config['node_primary']['table'] === $table) {
-                $firstStep[] = $config['node_secondary']['table'];
-            }
-        }
-        $firstStep[] = $table;
-
-        $ignoredSteps = [];
-        foreach ($configs as $config) {
-            if (!in_array($config['node_primary']['table'], $firstStep)) {
-                $ignoredSteps[] = $config;
-            }
-        }
-
-        $acceptableConfigs = [];
-        foreach ($configs as $key => $config) {
-            if (!array_key_exists($key, $ignoredSteps)) {
-                $acceptableConfigs[$key] = $config;
-            }
-        }
-
-        $replicatingHash = hash('sha256', json_encode($ignoredSteps));
-
-        /*
-         * Para a seguinte query: INSERT INTO BANCO_USERS.users (name, avatar, phone_number, created_at, updated_at) VALUES ('Zé Mane', null, '37900000001', '2024-12-13 14:46:01', '2024-12-13 14:46:01')
-         * Usando sha256, gerou 64 caracteres
-         * Usando sha512, passou para 128 caracteres
-         *
-         * Então, sha256 me pareceu ser o suficiente.
-         */
-
-        /*
-         * Está tendo um problema na volta, possivelmente por causa da tag de replicação que não está sendo atendida.
-         */
-
-        foreach ($configs as $config) {
-            $replicatingTag = '/* isReplicating(' . gethostname() . '_' . $replicatingHash . ') */';
+            $replicatingTag = '/* isReplicating(' . gethostname() . '_' . $key . ') */';
 
             if (str_contains($this->query, $replicatingTag)) {
                 continue;
             }
+            
             $nodePrimaryDatabase = $config['node_primary']['database'];
             $nodePrimaryTable = $config['node_primary']['table'];
             $nodeSecondaryDatabase = $config['node_secondary']['database'];
             $nodeSecondaryTable = $config['node_secondary']['table'];
+
             if (
                 ($database === $nodePrimaryDatabase && $table === $nodePrimaryTable) ||
                 ($database === $nodeSecondaryDatabase && $table === $nodeSecondaryTable)
@@ -99,21 +62,27 @@ class ReplicatorSubscriber extends EventSubscribers
                     $nodeSecondaryConfig = $config['node_primary'];
                     $columnMappings = array_flip($config['columns']);
                 }
+
                 if (!$this->checkChangedColumns($event, array_keys($columnMappings))) {
                     continue;
                 }
+
                 $nodePrimaryReferenceKey = $nodePrimaryConfig['reference_key'];
                 $nodeSecondaryDatabase = $nodeSecondaryConfig['database'];
                 $nodeSecondaryTable = $nodeSecondaryConfig['table'];
                 $nodeSecondaryReferenceKey = $nodeSecondaryConfig['reference_key'];
+
                 foreach ($event->values as $row) {
                     DB::beginTransaction();
+
                     $rowData = $row;
+
                     if ($event instanceof WriteRowsDTO) {
                         $columnMappings[$nodePrimaryReferenceKey] = $nodeSecondaryReferenceKey;
                     } elseif ($event instanceof UpdateRowsDTO) {
                         $rowData = $row['after'];
                     }
+
                     $beforeReplicateEvent = new BeforeReplicate(
                         $nodePrimaryDatabase,
                         $nodePrimaryTable,
@@ -123,12 +92,14 @@ class ReplicatorSubscriber extends EventSubscribers
                         $event
                     );
                     Event::dispatch($beforeReplicateEvent);
+
                     if ($event instanceof UpdateRowsDTO) {
                         $beforeReplicateEvent->rowData = [
                             'before' => $row['before'],
                             'after' => $beforeReplicateEvent->rowData,
                         ];
                     }
+
                     $databaseHandler = new ReplicateSecondaryNodeHandler(
                         $nodePrimaryReferenceKey,
                         $nodeSecondaryDatabase,
@@ -138,19 +109,23 @@ class ReplicatorSubscriber extends EventSubscribers
                         $columnMappings,
                         $beforeReplicateEvent->rowData
                     );
+
                     switch ($event::class) {
                         case UpdateRowsDTO::class:
                             $databaseHandler->update();
                             break;
+
                         case WriteRowsDTO::class:
                             $databaseHandler->insert();
                             break;
+
                         case DeleteRowsDTO::class:
                             $databaseHandler->delete();
                             break;
                     }
                     DB::commit();
                 }
+
                 $binLogInfo = $event->getEventInfo()->binLogCurrent;
                 $replicationModel = new ReplicatorConfig();
                 $replicationModel->exists = true;
@@ -168,6 +143,7 @@ class ReplicatorSubscriber extends EventSubscribers
     public function checkChangedColumns(EventDTO $event, array $configuredColumns): bool
     {
         $changedColumns = [];
+
         foreach ($event->values as $row) {
             switch ($event::class) {
                 case UpdateRowsDTO::class:
