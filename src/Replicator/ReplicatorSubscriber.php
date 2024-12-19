@@ -86,22 +86,22 @@ class ReplicatorSubscriber extends EventSubscribers
                         $rowData = $row['after'];
                     }
 
-                    $beforeReplicateEvent = new BeforeReplicate(
-                        $nodePrimaryDatabase,
-                        $nodePrimaryTable,
-                        $nodeSecondaryDatabase,
-                        $nodeSecondaryTable,
-                        $rowData,
-                        $event
-                    );
-                    Event::dispatch($beforeReplicateEvent);
+                    $replicatorInterfaces = File::allFiles(app_path('ReplicatorInterceptors'));
 
-                    if ($event instanceof UpdateRowsDTO) {
-                        $beforeReplicateEvent->rowData = [
-                            'before' => $row['before'],
-                            'after' => $beforeReplicateEvent->rowData,
-                        ];
+                    foreach ($replicatorInterfaces as $interface) {
+                        // TODO: alterar
+                        $className = 'App\\Interceptors\\' . $interface->getFilenameWithoutExtension();
+                        $interfaceInstance = new $className();
+                        $methods = $interfaceInstance->methodNames;
+
+                        if (count(array_intersect([$nodePrimaryTable, $nodeSecondaryTable], $methods)) === 2) {
+                            $interfaceInstance->{$nodeSecondaryTable}($rowData, $changedColumns);
+                            // TODO: ver se é melhor um break ou um continue
+                            break;
+                        }
                     }
+
+                    $changedColumns[$nodeSecondaryReferenceKey] = $rowData[$nodePrimaryReferenceKey];
 
                     $databaseHandler = new ReplicateSecondaryNodeHandler(
                         $nodePrimaryReferenceKey,
