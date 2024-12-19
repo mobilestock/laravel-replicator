@@ -172,6 +172,6 @@ class ReplicatorSubscriber extends EventSubscribers
             }
         }
 
-        return !empty(array_intersect($configuredColumns, $changedColumns));
+        return $changedColumns;
     }
 }
