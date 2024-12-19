@@ -141,7 +141,7 @@ class ReplicatorSubscriber extends EventSubscribers
         }
     }
 
-    public function checkChangedColumns(EventDTO $event, array $configuredColumns): bool
+    public function checkChangedColumns(RowsDTO $event, array $columnMappings): array
     {
         $changedColumns = [];
 
