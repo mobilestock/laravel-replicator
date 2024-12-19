@@ -20,21 +20,11 @@ class ReplicateSecondaryNodeHandler
 
     public function update(): void
     {
-        $before = $this->row['before'];
-        $after = $this->row['after'];
-
-        $changedColumns = [];
-        foreach ($this->columnMappings as $nodePrimaryColumn => $nodeSecondaryColumn) {
-            if ($before[$nodePrimaryColumn] !== $after[$nodePrimaryColumn]) {
-                $changedColumns[$nodeSecondaryColumn] = $after[$nodePrimaryColumn];
-            }
-        }
-
-        $referenceKeyValue = $after[$this->nodePrimaryReferenceKey];
+        $referenceKeyValue = $this->row[$this->nodeSecondaryReferenceKey];
 
         $binds = array_combine(
-            array_map(fn($column) => ":{$column}", array_keys($changedColumns)),
-            array_values($changedColumns)
+            array_map(fn($column) => ":{$column}", array_keys($this->row)),
+            array_values($this->row)
         );
         $binds[":{$this->nodeSecondaryReferenceKey}"] = $referenceKeyValue;
 
@@ -42,7 +32,7 @@ class ReplicateSecondaryNodeHandler
             ', ',
             array_map(function ($column) {
                 return "{$column} = :{$column}";
-            }, array_keys($changedColumns))
+            }, array_keys($this->row))
         );
 
         $sql = "UPDATE {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
