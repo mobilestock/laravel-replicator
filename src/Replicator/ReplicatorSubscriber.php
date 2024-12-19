@@ -93,8 +93,8 @@ class ReplicatorSubscriber extends EventSubscribers
                         $interfaceInstance = new $className();
                         $methodName = Str::camel($nodePrimaryTable) . 'X' . Str::camel($nodeSecondaryTable);
 
-                        if (count(array_intersect([$nodePrimaryTable, $nodeSecondaryTable], $methods)) === 2) {
-                            $interfaceInstance->{$nodeSecondaryTable}($rowData, $changedColumns);
+                        if (method_exists($className, $methodName)) {
+                            $interfaceInstance->{$methodName}($rowData, $changedColumns);
                             // TODO: ver se é melhor um break ou um continue
                             break;
                         }
