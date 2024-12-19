@@ -90,6 +90,7 @@ class ReplicatorSubscriber extends EventSubscribers
                     $replicatorInterfaces = File::allFiles(app_path('ReplicatorInterceptors'));
 
                     foreach ($replicatorInterfaces as $interface) {
+                        // TODO: Fazer um método para converter o caminho do arquivo para namespace
                         $className = 'App\\ReplicatorInterceptors\\' . $interface->getFilenameWithoutExtension();
                         $methodName = Str::camel($nodePrimaryTable) . 'X' . Str::camel($nodeSecondaryTable);
 
