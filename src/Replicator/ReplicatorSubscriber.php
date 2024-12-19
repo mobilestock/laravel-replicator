@@ -91,7 +91,7 @@ class ReplicatorSubscriber extends EventSubscribers
                     foreach ($replicatorInterfaces as $interface) {
                         $className = 'App\\ReplicatorInterceptors\\' . $interface->getFilenameWithoutExtension();
                         $interfaceInstance = new $className();
-                        $methods = $interfaceInstance->methodNames;
+                        $methodName = Str::camel($nodePrimaryTable) . 'X' . Str::camel($nodeSecondaryTable);
 
                         if (count(array_intersect([$nodePrimaryTable, $nodeSecondaryTable], $methods)) === 2) {
                             $interfaceInstance->{$nodeSecondaryTable}($rowData, $changedColumns);
