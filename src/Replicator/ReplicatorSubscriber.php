@@ -89,8 +89,7 @@ class ReplicatorSubscriber extends EventSubscribers
                     $replicatorInterfaces = File::allFiles(app_path('ReplicatorInterceptors'));
 
                     foreach ($replicatorInterfaces as $interface) {
-                        // TODO: alterar
-                        $className = 'App\\Interceptors\\' . $interface->getFilenameWithoutExtension();
+                        $className = 'App\\ReplicatorInterceptors\\' . $interface->getFilenameWithoutExtension();
                         $interfaceInstance = new $className();
                         $methods = $interfaceInstance->methodNames;
 
