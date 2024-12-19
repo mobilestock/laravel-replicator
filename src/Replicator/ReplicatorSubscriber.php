@@ -163,6 +163,13 @@ class ReplicatorSubscriber extends EventSubscribers
                     );
                     break;
             }
+            $before = $row['before'];
+            $after = $row['after'];
+            foreach ($columnMappings as $nodePrimaryColumn => $nodeSecondaryColumn) {
+                if ($before[$nodePrimaryColumn] !== $after[$nodePrimaryColumn]) {
+                    $changedColumns[$nodeSecondaryColumn] = $after[$nodePrimaryColumn];
+                }
+            }
         }
 
         return !empty(array_intersect($configuredColumns, $changedColumns));
