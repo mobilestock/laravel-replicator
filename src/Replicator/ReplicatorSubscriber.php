@@ -150,19 +150,13 @@ class ReplicatorSubscriber extends EventSubscribers
         foreach ($event->values as $row) {
             switch ($event::class) {
                 case UpdateRowsDTO::class:
-                    $changedColumns = array_merge(
-                        $changedColumns,
-                        array_keys(array_diff_assoc($row['after'], $row['before']))
-                    );
+                    $before = $row['before'];
+                    $after = $row['after'];
                     break;
                 case WriteRowsDTO::class:
-                    $changedColumns = array_merge($changedColumns, array_keys($row));
-                    break;
                 case DeleteRowsDTO::class:
-                    $changedColumns = array_merge(
-                        $changedColumns,
-                        array_keys($row['values'] ?? ($row['before'] ?? $row))
-                    );
+                    $before = [];
+                    $after = $row;
                     break;
             }
             $before = $row['before'];
