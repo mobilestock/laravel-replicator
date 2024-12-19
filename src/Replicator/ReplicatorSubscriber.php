@@ -62,7 +62,9 @@ class ReplicatorSubscriber extends EventSubscribers
                     $columnMappings = array_flip($config['columns']);
                 }
 
-                if (!$this->checkChangedColumns($event, array_keys($columnMappings))) {
+                $changedColumns = $this->checkChangedColumns($event, $columnMappings);
+
+                if (empty($changedColumns)) {
                     continue;
                 }
 
