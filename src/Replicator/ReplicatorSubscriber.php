@@ -108,7 +108,7 @@ class ReplicatorSubscriber extends EventSubscribers
                         $nodeSecondaryReferenceKey,
                         $replicatingTag,
                         $columnMappings,
-                        $beforeReplicateEvent->rowData
+                        $changedColumns
                     );
 
                     switch ($event::class) {
