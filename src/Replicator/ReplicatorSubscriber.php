@@ -153,19 +153,16 @@ class ReplicatorSubscriber extends EventSubscribers
                 case UpdateRowsDTO::class:
                     $before = $row['before'];
                     $after = $row['after'];
+                    foreach ($columnMappings as $nodePrimaryColumn => $nodeSecondaryColumn) {
+                        if ($before[$nodePrimaryColumn] !== $after[$nodePrimaryColumn]) {
+                            $changedColumns[$nodeSecondaryColumn] = $after[$nodePrimaryColumn];
+                        }
+                    }
                     break;
                 case WriteRowsDTO::class:
                 case DeleteRowsDTO::class:
-                    $before = [];
-                    $after = $row;
+                    $changedColumns = $row;
                     break;
-            }
-            $before = $row['before'];
-            $after = $row['after'];
-            foreach ($columnMappings as $nodePrimaryColumn => $nodeSecondaryColumn) {
-                if ($before[$nodePrimaryColumn] !== $after[$nodePrimaryColumn]) {
-                    $changedColumns[$nodeSecondaryColumn] = $after[$nodePrimaryColumn];
-                }
             }
         }
 
