@@ -87,17 +87,19 @@ class ReplicatorSubscriber extends EventSubscribers
                         $rowData = $row['after'];
                     }
 
-                    $replicatorInterfaces = File::allFiles(app_path('ReplicatorInterceptors'));
+                    if (!($event instanceof DeleteRowsDTO)) {
+                        $replicatorInterfaces = File::allFiles(app_path('ReplicatorInterceptors'));
 
-                    foreach ($replicatorInterfaces as $interface) {
-                        // TODO: Fazer um método para converter o caminho do arquivo para namespace
-                        $className = 'App\\ReplicatorInterceptors\\' . $interface->getFilenameWithoutExtension();
-                        $methodName = Str::camel($nodePrimaryTable) . 'X' . Str::camel($nodeSecondaryTable);
+                        foreach ($replicatorInterfaces as $interface) {
+                            // TODO: Fazer um método para converter o caminho do arquivo para namespace
+                            $className = 'App\\ReplicatorInterceptors\\' . $interface->getFilenameWithoutExtension();
+                            $methodName = Str::camel($nodePrimaryTable) . 'X' . Str::camel($nodeSecondaryTable);
 
-                        if (method_exists($className, $methodName)) {
-                            $interfaceInstance = new $className();
-                            $interfaceInstance->{$methodName}($rowData, $changedColumns);
-                            break;
+                            if (method_exists($className, $methodName)) {
+                                $interfaceInstance = new $className();
+                                $interfaceInstance->{$methodName}($rowData, $changedColumns);
+                                break;
+                            }
                         }
                     }
 
