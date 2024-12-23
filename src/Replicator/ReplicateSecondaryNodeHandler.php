@@ -59,17 +59,16 @@ class ReplicateSecondaryNodeHandler
         $columns = implode(',', array_keys($mappedData));
         $values = implode(',', array_map(fn($column) => ":{$column}", array_keys($mappedData)));
 
-        $sql = "
-                INSERT INTO {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable} ({$columns})
+        $sql = "INSERT INTO {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable} ({$columns})
                 SELECT {$values}
                 FROM DUAL
                 WHERE NOT EXISTS (
-                    SELECT 1 
+                    SELECT 1
                     FROM {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
                     WHERE {$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey}
                 )
                 {$this->replicatingTag};
-    ";
+        ";
 
         DB::insert($sql, $mappedData);
     }
