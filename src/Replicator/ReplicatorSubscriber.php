@@ -161,6 +161,10 @@ class ReplicatorSubscriber extends EventSubscribers
                     }
                     break;
                 case WriteRowsDTO::class:
+                    foreach ($columnMappings as $nodePrimaryColumn => $nodeSecondaryColumn) {
+                        $changedColumns[$nodeSecondaryColumn] = $row[$nodePrimaryColumn];
+                    }
+                    break;
                 case DeleteRowsDTO::class:
                     $changedColumns = $row;
                     break;
