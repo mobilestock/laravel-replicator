@@ -20,7 +20,7 @@ class ReplicatorSubscriber extends EventSubscribers
 {
     public string $query;
 
-    public function allEvents(EventDTO|MariaDbAnnotateRowsDTO $event): void
+    public function allEvents(EventDTO $event): void
     {
         if ($event instanceof MariaDbAnnotateRowsDTO) {
             $this->query = $event->query;
