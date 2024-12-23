@@ -48,16 +48,8 @@ class ReplicateSecondaryNodeHandler
 
     public function insert(): void
     {
-        $mappedData = [];
-        foreach ($this->row as $column => $value) {
-            if (!isset($this->columnMappings[$column])) {
-                continue;
-            }
-            $mappedData[$this->columnMappings[$column]] = $value;
-        }
-
-        $columns = implode(',', array_keys($mappedData));
-        $values = implode(',', array_map(fn($column) => ":{$column}", array_keys($mappedData)));
+        $columns = implode(',', array_keys($this->row));
+        $values = implode(',', array_map(fn($column) => ":{$column}", array_keys($this->row)));
 
         $sql = "INSERT INTO {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable} ({$columns})
                 SELECT {$values}
@@ -70,7 +62,7 @@ class ReplicateSecondaryNodeHandler
                 {$this->replicatingTag};
         ";
 
-        DB::insert($sql, $mappedData);
+        DB::insert($sql, $this->row);
     }
 
     public function delete(): void
