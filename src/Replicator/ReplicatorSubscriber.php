@@ -2,7 +2,7 @@
 
 namespace MobileStock\LaravelReplicator;
 
-use Composer\Autoload\ClassLoader;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -89,7 +89,7 @@ class ReplicatorSubscriber extends EventSubscribers
                     }
 
                     if (!($event instanceof DeleteRowsDTO)) {
-                        $replicatorInterfaces = File::allFiles(app_path('ReplicatorInterceptors'));
+                        $replicatorInterfaces = File::allFiles(App::path('ReplicatorInterceptors'));
 
                         foreach ($replicatorInterfaces as $interface) {
                             $className = 'ReplicatorInterceptors\\' . $interface->getFilenameWithoutExtension();
