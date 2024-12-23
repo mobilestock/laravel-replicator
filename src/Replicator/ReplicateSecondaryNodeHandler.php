@@ -18,6 +18,9 @@ class ReplicateSecondaryNodeHandler
     ) {
     }
 
+    /**
+     * @issue: https://github.com/mobilestock/backend/issues/721
+     */
     public function update(): void
     {
         $referenceKeyValue = $this->row[$this->nodeSecondaryReferenceKey];
@@ -48,6 +51,9 @@ class ReplicateSecondaryNodeHandler
         }
     }
 
+    /**
+     * @issue: https://github.com/mobilestock/backend/issues/721
+     */
     public function insert(): void
     {
         $columns = implode(',', array_keys($this->row));
@@ -67,6 +73,9 @@ class ReplicateSecondaryNodeHandler
         DB::insert($sql, $this->row);
     }
 
+    /**
+     * @issue: https://github.com/mobilestock/backend/issues/721
+     */
     public function delete(): void
     {
         $referenceKeyValue = $this->row[$this->nodePrimaryReferenceKey];
