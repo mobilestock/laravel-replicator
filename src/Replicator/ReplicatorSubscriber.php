@@ -15,7 +15,6 @@ use MySQLReplication\Event\DTO\RowsDTO;
 use MySQLReplication\Event\DTO\UpdateRowsDTO;
 use MySQLReplication\Event\DTO\WriteRowsDTO;
 use MySQLReplication\Event\EventSubscribers;
-use RuntimeException;
 
 class ReplicatorSubscriber extends EventSubscribers
 {
