@@ -180,15 +180,7 @@ class ReplicatorSubscriber extends EventSubscribers
     {
         $autoloadPath = base_path('vendor/autoload.php');
 
-        if (!file_exists($autoloadPath)) {
-            throw new RuntimeException('Arquivo autoload.php não encontrado no caminho especificado.');
-        }
-
         $composerAutoload = require $autoloadPath;
-
-        if (!$composerAutoload instanceof ClassLoader) {
-            throw new RuntimeException('O autoloader do Composer não foi carregado corretamente.');
-        }
 
         $namespaces = $composerAutoload->getPrefixesPsr4();
 
