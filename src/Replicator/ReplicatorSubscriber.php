@@ -26,7 +26,7 @@ class ReplicatorSubscriber extends EventSubscribers
             $this->query = $event->query;
             return;
         }
-        if (!($event instanceof WriteRowsDTO || $event instanceof UpdateRowsDTO || $event instanceof DeleteRowsDTO)) {
+        if (!$event instanceof RowsDTO) {
             return;
         }
 
