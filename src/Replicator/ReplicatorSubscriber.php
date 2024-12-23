@@ -176,7 +176,7 @@ class ReplicatorSubscriber extends EventSubscribers
         return $changedColumns;
     }
 
-    public function findClassInNamespaces(string $className): ?string
+    public function findNamespaceFromClass(string $className): ?string
     {
         $autoloadPath = base_path('vendor/autoload.php');
 
