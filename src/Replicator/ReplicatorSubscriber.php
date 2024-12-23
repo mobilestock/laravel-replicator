@@ -98,7 +98,7 @@ class ReplicatorSubscriber extends EventSubscribers
 
                             if (method_exists($className, $methodName)) {
                                 $interfaceInstance = new $className();
-                                $interfaceInstance->{$methodName}($rowData, $changedColumns);
+                                $changedColumns = $interfaceInstance->{$methodName}($rowData, $changedColumns);
                                 break;
                             }
                         }
