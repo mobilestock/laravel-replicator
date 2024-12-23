@@ -22,6 +22,8 @@ class ReplicateSecondaryNodeHandler
     {
         $referenceKeyValue = $this->row[$this->nodeSecondaryReferenceKey];
 
+        unset($this->row[$this->nodeSecondaryReferenceKey]);
+
         $binds = array_combine(
             array_map(fn($column) => ":{$column}", array_keys($this->row)),
             array_values($this->row)
