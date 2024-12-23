@@ -2,6 +2,7 @@
 
 namespace MobileStock\LaravelReplicator;
 
+use Composer\Autoload\ClassLoader;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -14,6 +15,7 @@ use MySQLReplication\Event\DTO\RowsDTO;
 use MySQLReplication\Event\DTO\UpdateRowsDTO;
 use MySQLReplication\Event\DTO\WriteRowsDTO;
 use MySQLReplication\Event\EventSubscribers;
+use RuntimeException;
 
 class ReplicatorSubscriber extends EventSubscribers
 {
@@ -172,5 +174,33 @@ class ReplicatorSubscriber extends EventSubscribers
         }
 
         return $changedColumns;
+    }
+
+    public function findClassInNamespaces(string $className): ?string
+    {
+        $autoloadPath = base_path('vendor/autoload.php');
+
+        if (!file_exists($autoloadPath)) {
+            throw new RuntimeException('Arquivo autoload.php não encontrado no caminho especificado.');
+        }
+
+        $composerAutoload = require $autoloadPath;
+
+        if (!$composerAutoload instanceof ClassLoader) {
+            throw new RuntimeException('O autoloader do Composer não foi carregado corretamente.');
+        }
+
+        $namespaces = $composerAutoload->getPrefixesPsr4();
+
+        foreach ($namespaces as $namespace => $paths) {
+            foreach ($paths as $path) {
+                $classPath = $path . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, $className) . '.php';
+                if (file_exists($classPath)) {
+                    return $namespace . $className;
+                }
+            }
+        }
+
+        return null;
     }
 }
