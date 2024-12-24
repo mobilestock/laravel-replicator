@@ -26,12 +26,27 @@ class ReplicateSecondaryNodeHandler
         $referenceKeyValue = $this->row[$this->nodeSecondaryReferenceKey];
         unset($this->row[$this->nodeSecondaryReferenceKey]);
 
-        $rowCount = DB::table("{$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}")
-            ->where($this->nodeSecondaryReferenceKey, $referenceKeyValue)
-            ->update($this->row);
+        $binds = array_combine(
+            array_map(fn($column) => ":{$column}", array_keys($this->row)),
+            array_values($this->row)
+        );
+        $binds[":{$this->nodeSecondaryReferenceKey}"] = $referenceKeyValue;
+
+        $clausule = implode(
+            ', ',
+            array_map(function ($column) {
+                return "{$column} = :{$column}";
+            }, array_keys($this->row))
+        );
+
+        $sql = "UPDATE {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
+                    SET {$clausule}
+                    WHERE
+                        {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}.{$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey} {$this->replicatingTag};";
+        $rowCount = DB::update($sql, $binds);
 
         if ($rowCount > 1) {
-            throw new DomainException('More than one row tried to update on replicator.');
+            throw new DomainException("More than one row tried to update on replicator: $sql");
         }
     }
 
@@ -64,12 +79,17 @@ class ReplicateSecondaryNodeHandler
     {
         $referenceKeyValue = $this->row[$this->nodePrimaryReferenceKey];
 
-        $rowCount = DB::table("{$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}")
-            ->where("{$this->nodeSecondaryReferenceKey}", $referenceKeyValue)
-            ->delete();
+        $binds = [":{$this->nodeSecondaryReferenceKey}" => $referenceKeyValue];
+
+        $sql = "DELETE FROM
+                {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
+            WHERE
+                {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}.{$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey} {$this->replicatingTag};";
+
+        $rowCount = DB::delete($sql, $binds);
 
         if ($rowCount > 1) {
-            throw new DomainException('More than one row tried to delete on replicator.');
+            throw new DomainException("More than one row tried to delete on replicator: $sql");
         }
     }
 }
