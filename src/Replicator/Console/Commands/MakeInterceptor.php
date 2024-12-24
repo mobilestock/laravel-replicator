@@ -18,16 +18,16 @@ class MakeInterceptor extends Command
 
         if (!File::exists($directory)) {
             File::makeDirectory($directory, 0755, true);
-            $this->info("Diretório criado: $directory");
+            $this->info("Directory created: $directory");
         }
 
         if (File::exists($filePath)) {
-            $this->fail("O arquivo $filePath já existe!");
+            $this->fail("The file $filePath already exists");
         }
 
         $content = "<?php /** @noinspection PhpUnused */\n\nnamespace App\\ReplicatorInterceptors;\n\nclass $name\n{\n    //\n}\n";
         File::put($filePath, $content);
 
-        $this->info("Arquivo criado: $filePath");
+        $this->info("Interceptor created: $filePath");
     }
 }
