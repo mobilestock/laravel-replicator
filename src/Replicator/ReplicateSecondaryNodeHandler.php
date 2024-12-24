@@ -64,12 +64,9 @@ class ReplicateSecondaryNodeHandler
     {
         $referenceKeyValue = $this->row[$this->nodePrimaryReferenceKey];
 
-        $query = DB::table("{$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}")->where(
-            "{$this->nodeSecondaryReferenceKey}",
-            $referenceKeyValue
-        );
-
-        $rowCount = $query->delete();
+        $rowCount = DB::table("{$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}")
+            ->where("{$this->nodeSecondaryReferenceKey}", $referenceKeyValue)
+            ->delete();
 
         if ($rowCount > 1) {
             throw new DomainException('More than one row tried to delete on replicator.');
