@@ -40,9 +40,8 @@ class ReplicateSecondaryNodeHandler
         );
 
         $sql = "UPDATE {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
-                    SET {$clausule}
-                    WHERE
-                        {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}.{$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey} {$this->replicatingTag};";
+                SET {$clausule}
+                WHERE {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}.{$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey} {$this->replicatingTag};";
         $rowCount = DB::update($sql, $binds);
 
         if ($rowCount > 1) {
