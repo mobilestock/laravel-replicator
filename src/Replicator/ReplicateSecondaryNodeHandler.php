@@ -72,7 +72,7 @@ class ReplicateSecondaryNodeHandler
         $rowCount = $query->delete();
 
         if ($rowCount > 1) {
-            throw new DomainException("More than one row tried to delete on replicator: $sql");
+            throw new DomainException('More than one row tried to delete on replicator.');
         }
     }
 }
