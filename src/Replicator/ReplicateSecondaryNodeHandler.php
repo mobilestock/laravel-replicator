@@ -24,7 +24,6 @@ class ReplicateSecondaryNodeHandler
     public function update(): void
     {
         $referenceKeyValue = $this->row[$this->nodeSecondaryReferenceKey];
-
         unset($this->row[$this->nodeSecondaryReferenceKey]);
 
         $binds = array_combine(
