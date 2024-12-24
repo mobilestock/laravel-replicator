@@ -80,10 +80,8 @@ class ReplicateSecondaryNodeHandler
 
         $binds = [":{$this->nodeSecondaryReferenceKey}" => $referenceKeyValue];
 
-        $sql = "DELETE FROM
-                {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
-            WHERE
-                {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}.{$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey} {$this->replicatingTag};";
+        $sql = "DELETE FROM {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
+                WHERE {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}.{$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey} {$this->replicatingTag};";
 
         $rowCount = DB::delete($sql, $binds);
 
