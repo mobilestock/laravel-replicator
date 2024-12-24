@@ -17,10 +17,12 @@ class MakeInterceptor extends Command
         $filePath = $directory . '/' . $name . '.php';
 
         if (!File::exists($directory)) {
+            // TODO: analisar esses parametros e testar a criação
             File::makeDirectory($directory, 0755, true);
             $this->info("Directory created: $directory");
         }
 
+        // TODO: testar essa condicional
         if (File::exists($filePath)) {
             $this->fail("The file $filePath already exists");
         }
