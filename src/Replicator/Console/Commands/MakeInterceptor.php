@@ -25,7 +25,7 @@ class MakeInterceptor extends Command
             $this->fail("O arquivo $filePath já existe!");
         }
 
-        $content = "<?php /** @noinspection PhpUnused */\n\nnamespace App\\ReplicatorInterceptors;\n\nclass $name\n{\n    // Código da classe aqui\n}\n";
+        $content = "<?php /** @noinspection PhpUnused */\n\nnamespace App\\ReplicatorInterceptors;\n\nclass $name\n{\n    //\n}\n";
         File::put($filePath, $content);
 
         $this->info("Arquivo criado: $filePath");
