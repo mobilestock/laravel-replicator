@@ -17,7 +17,7 @@ class MakeInterceptor extends Command
         $filePath = $directory . '/' . $name . '.php';
 
         if (!File::exists($directory)) {
-            File::makeDirectory($directory, 0755, true);
+            File::makeDirectory($directory, 0755);
             $this->info("Directory created: $directory");
         }
 
