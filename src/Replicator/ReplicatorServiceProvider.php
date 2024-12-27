@@ -3,7 +3,7 @@
 namespace MobileStock\LaravelReplicator;
 
 use Illuminate\Support\ServiceProvider;
-use MobileStock\LaravelReplicator\Console\Commands\MakeInterceptor;
+use MobileStock\LaravelReplicator\Console\Commands\MakeInterceptorCommand;
 use MobileStock\LaravelReplicator\Console\Commands\StartReplicationCommand;
 
 class ReplicatorServiceProvider extends ServiceProvider
@@ -27,6 +27,6 @@ class ReplicatorServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        $this->commands([StartReplicationCommand::class, MakeInterceptor::class]);
+        $this->commands([StartReplicationCommand::class, MakeInterceptorCommand::class]);
     }
 }
