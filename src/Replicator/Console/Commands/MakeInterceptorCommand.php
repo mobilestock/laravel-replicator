@@ -6,7 +6,7 @@ use File;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
 
-class MakeInterceptor extends Command
+class MakeInterceptorCommand extends Command
 {
     protected $signature = 'make:replicator-interceptor {name}';
     protected $description = 'Create a new interceptor for laravel replicator';
@@ -26,17 +26,17 @@ class MakeInterceptor extends Command
             $this->fail("The file $filePath already exists");
         }
 
-        $content = <<<"PHP"
-        <?php /** @noinspection PhpUnused */
+        $content = <<<PHP
+<?php /** @noinspection PhpUnused */
 
-        namespace App\\ReplicatorInterceptors;
+namespace App\\ReplicatorInterceptors;
 
-        class $name
-        {
-        //
-        }
+class $name
+{
+//
+}
 
-        PHP;
+PHP;
 
         File::put($filePath, $content);
 
