@@ -26,7 +26,18 @@ class MakeInterceptor extends Command
             $this->fail("The file $filePath already exists");
         }
 
-        $content = "<?php /** @noinspection PhpUnused */\n\nnamespace App\\ReplicatorInterceptors;\n\nclass $name\n{\n    //\n}\n";
+        $content = <<<"PHP"
+        <?php /** @noinspection PhpUnused */
+
+        namespace App\\ReplicatorInterceptors;
+
+        class $name
+        {
+        //
+        }
+
+        PHP;
+
         File::put($filePath, $content);
 
         $this->info("Interceptor created: $filePath");
