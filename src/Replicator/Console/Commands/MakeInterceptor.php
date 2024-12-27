@@ -4,6 +4,7 @@ namespace MobileStock\LaravelReplicator\Console\Commands;
 
 use File;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 
 class MakeInterceptor extends Command
 {
@@ -13,7 +14,7 @@ class MakeInterceptor extends Command
     public function handle(): void
     {
         $name = $this->argument('name');
-        $directory = app_path('ReplicatorInterceptors');
+        $directory = App::path('ReplicatorInterceptors');
         $filePath = $directory . '/' . $name . '.php';
 
         if (!File::exists($directory)) {
