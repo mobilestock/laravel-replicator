@@ -2,14 +2,16 @@
 
 namespace MobileStock\LaravelReplicator;
 
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
-use MobileStock\LaravelReplicator\Events\BeforeReplicate;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use MobileStock\LaravelReplicator\Model\ReplicatorConfig;
 use MySQLReplication\Event\DTO\DeleteRowsDTO;
 use MySQLReplication\Event\DTO\EventDTO;
 use MySQLReplication\Event\DTO\MariaDbAnnotateRowsDTO;
+use MySQLReplication\Event\DTO\RowsDTO;
 use MySQLReplication\Event\DTO\UpdateRowsDTO;
 use MySQLReplication\Event\DTO\WriteRowsDTO;
 use MySQLReplication\Event\EventSubscribers;
@@ -18,13 +20,13 @@ class ReplicatorSubscriber extends EventSubscribers
 {
     public string $query;
 
-    public function allEvents(EventDTO|MariaDbAnnotateRowsDTO $event): void
+    public function allEvents(EventDTO $event): void
     {
         if ($event instanceof MariaDbAnnotateRowsDTO) {
             $this->query = $event->query;
             return;
         }
-        if (!($event instanceof WriteRowsDTO || $event instanceof UpdateRowsDTO || $event instanceof DeleteRowsDTO)) {
+        if (!$event instanceof RowsDTO) {
             return;
         }
 
@@ -62,7 +64,9 @@ class ReplicatorSubscriber extends EventSubscribers
                     $columnMappings = array_flip($config['columns']);
                 }
 
-                if (!$this->checkChangedColumns($event, array_keys($columnMappings))) {
+                $changedColumns = $this->checkChangedColumns($event, $columnMappings);
+
+                if (empty($changedColumns)) {
                     continue;
                 }
 
@@ -84,22 +88,23 @@ class ReplicatorSubscriber extends EventSubscribers
                         $rowData = $row['after'];
                     }
 
-                    $beforeReplicateEvent = new BeforeReplicate(
-                        $nodePrimaryDatabase,
-                        $nodePrimaryTable,
-                        $nodeSecondaryDatabase,
-                        $nodeSecondaryTable,
-                        $rowData,
-                        $event
-                    );
-                    Event::dispatch($beforeReplicateEvent);
+                    if (!($event instanceof DeleteRowsDTO)) {
+                        $replicatorInterfaces = File::allFiles(App::path('ReplicatorInterceptors'));
 
-                    if ($event instanceof UpdateRowsDTO) {
-                        $beforeReplicateEvent->rowData = [
-                            'before' => $row['before'],
-                            'after' => $beforeReplicateEvent->rowData,
-                        ];
+                        foreach ($replicatorInterfaces as $interface) {
+                            $className = 'ReplicatorInterceptors\\' . $interface->getFilenameWithoutExtension();
+                            $className = $this->findNamespaceFromClass($className);
+                            $methodName = Str::camel($nodePrimaryTable) . 'X' . Str::camel($nodeSecondaryTable);
+
+                            if (method_exists($className, $methodName)) {
+                                $interfaceInstance = new $className();
+                                $changedColumns = $interfaceInstance->{$methodName}($rowData, $changedColumns);
+                                break;
+                            }
+                        }
                     }
+
+                    $changedColumns[$nodeSecondaryReferenceKey] = $rowData[$nodePrimaryReferenceKey];
 
                     $databaseHandler = new ReplicateSecondaryNodeHandler(
                         $nodePrimaryReferenceKey,
@@ -108,7 +113,7 @@ class ReplicatorSubscriber extends EventSubscribers
                         $nodeSecondaryReferenceKey,
                         $replicatingTag,
                         $columnMappings,
-                        $beforeReplicateEvent->rowData
+                        $changedColumns
                     );
 
                     switch ($event::class) {
@@ -141,30 +146,52 @@ class ReplicatorSubscriber extends EventSubscribers
         }
     }
 
-    public function checkChangedColumns(EventDTO $event, array $configuredColumns): bool
+    public function checkChangedColumns(RowsDTO $event, array $columnMappings): array
     {
         $changedColumns = [];
 
         foreach ($event->values as $row) {
             switch ($event::class) {
                 case UpdateRowsDTO::class:
-                    $changedColumns = array_merge(
-                        $changedColumns,
-                        array_keys(array_diff_assoc($row['after'], $row['before']))
-                    );
+                    $before = $row['before'];
+                    $after = $row['after'];
+                    foreach ($columnMappings as $nodePrimaryColumn => $nodeSecondaryColumn) {
+                        if ($before[$nodePrimaryColumn] !== $after[$nodePrimaryColumn]) {
+                            $changedColumns[$nodeSecondaryColumn] = $after[$nodePrimaryColumn];
+                        }
+                    }
                     break;
                 case WriteRowsDTO::class:
-                    $changedColumns = array_merge($changedColumns, array_keys($row));
+                    foreach ($columnMappings as $nodePrimaryColumn => $nodeSecondaryColumn) {
+                        $changedColumns[$nodeSecondaryColumn] = $row[$nodePrimaryColumn];
+                    }
                     break;
                 case DeleteRowsDTO::class:
-                    $changedColumns = array_merge(
-                        $changedColumns,
-                        array_keys($row['values'] ?? ($row['before'] ?? $row))
-                    );
+                    $changedColumns = $row;
                     break;
             }
         }
 
-        return !empty(array_intersect($configuredColumns, $changedColumns));
+        return $changedColumns;
+    }
+
+    public function findNamespaceFromClass(string $className): ?string
+    {
+        $autoloadPath = base_path('vendor/autoload.php');
+
+        $composerAutoload = require $autoloadPath;
+
+        $namespaces = $composerAutoload->getPrefixesPsr4();
+
+        foreach ($namespaces as $namespace => $paths) {
+            foreach ($paths as $path) {
+                $classPath = $path . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, $className) . '.php';
+                if (file_exists($classPath)) {
+                    return $namespace . $className;
+                }
+            }
+        }
+
+        return null;
     }
 }

@@ -18,23 +18,17 @@ class ReplicateSecondaryNodeHandler
     ) {
     }
 
+    /**
+     * @issue: https://github.com/mobilestock/backend/issues/721
+     */
     public function update(): void
     {
-        $before = $this->row['before'];
-        $after = $this->row['after'];
-
-        $changedColumns = [];
-        foreach ($this->columnMappings as $nodePrimaryColumn => $nodeSecondaryColumn) {
-            if ($before[$nodePrimaryColumn] !== $after[$nodePrimaryColumn]) {
-                $changedColumns[$nodeSecondaryColumn] = $after[$nodePrimaryColumn];
-            }
-        }
-
-        $referenceKeyValue = $after[$this->nodePrimaryReferenceKey];
+        $referenceKeyValue = $this->row[$this->nodeSecondaryReferenceKey];
+        unset($this->row[$this->nodeSecondaryReferenceKey]);
 
         $binds = array_combine(
-            array_map(fn($column) => ":{$column}", array_keys($changedColumns)),
-            array_values($changedColumns)
+            array_map(fn($column) => ":{$column}", array_keys($this->row)),
+            array_values($this->row)
         );
         $binds[":{$this->nodeSecondaryReferenceKey}"] = $referenceKeyValue;
 
@@ -42,13 +36,12 @@ class ReplicateSecondaryNodeHandler
             ', ',
             array_map(function ($column) {
                 return "{$column} = :{$column}";
-            }, array_keys($changedColumns))
+            }, array_keys($this->row))
         );
 
         $sql = "UPDATE {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
-                        SET {$clausule}
-                        WHERE
-                            {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}.{$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey} {$this->replicatingTag};";
+                SET {$clausule}
+                WHERE {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}.{$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey} {$this->replicatingTag};";
         $rowCount = DB::update($sql, $binds);
 
         if ($rowCount > 1) {
@@ -56,44 +49,39 @@ class ReplicateSecondaryNodeHandler
         }
     }
 
+    /**
+     * @issue: https://github.com/mobilestock/backend/issues/721
+     */
     public function insert(): void
     {
-        $mappedData = [];
-        foreach ($this->row as $column => $value) {
-            if (!isset($this->columnMappings[$column])) {
-                continue;
-            }
-            $mappedData[$this->columnMappings[$column]] = $value;
-        }
+        $columns = implode(',', array_keys($this->row));
+        $values = implode(',', array_map(fn($column) => ":{$column}", array_keys($this->row)));
 
-        $columns = implode(',', array_keys($mappedData));
-        $values = implode(',', array_map(fn($column) => ":{$column}", array_keys($mappedData)));
-
-        $sql = "
-                INSERT INTO {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable} ({$columns})
+        $sql = "INSERT INTO {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable} ({$columns})
                 SELECT {$values}
                 FROM DUAL
                 WHERE NOT EXISTS (
-                    SELECT 1 
+                    SELECT 1
                     FROM {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
                     WHERE {$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey}
                 )
                 {$this->replicatingTag};
-    ";
+        ";
 
-        DB::insert($sql, $mappedData);
+        DB::insert($sql, $this->row);
     }
 
+    /**
+     * @issue: https://github.com/mobilestock/backend/issues/721
+     */
     public function delete(): void
     {
         $referenceKeyValue = $this->row[$this->nodePrimaryReferenceKey];
 
         $binds = [":{$this->nodeSecondaryReferenceKey}" => $referenceKeyValue];
 
-        $sql = "DELETE FROM
-                {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
-            WHERE
-                {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}.{$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey} {$this->replicatingTag};";
+        $sql = "DELETE FROM {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}
+                WHERE {$this->nodeSecondaryDatabase}.{$this->nodeSecondaryTable}.{$this->nodeSecondaryReferenceKey} = :{$this->nodeSecondaryReferenceKey} {$this->replicatingTag};";
 
         $rowCount = DB::delete($sql, $binds);
 
