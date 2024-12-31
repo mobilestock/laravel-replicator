@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\App;
 
 class MakeInterceptorCommand extends Command
 {
-    protected $signature = 'make:replicator-interceptor {name}';
+    protected $signature = 'replicator:interceptor {name}';
     protected $description = 'Create a new interceptor for laravel replicator';
 
     public function handle(): void
