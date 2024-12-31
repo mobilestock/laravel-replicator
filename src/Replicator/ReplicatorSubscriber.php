@@ -97,7 +97,7 @@ class ReplicatorSubscriber extends EventSubscribers
                             $methodName = Str::camel($nodePrimaryTable) . 'X' . Str::camel($nodeSecondaryTable);
 
                             if (method_exists($className, $methodName)) {
-                                $interfaceInstance = new $className();
+                                $interfaceInstance = App::make($className, ['event' => $event]);
                                 $changedColumns = $interfaceInstance->{$methodName}($rowData, $changedColumns);
                                 break;
                             }
