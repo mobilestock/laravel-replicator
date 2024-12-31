@@ -88,8 +88,9 @@ class ReplicatorSubscriber extends EventSubscribers
                         $rowData = $row['after'];
                     }
 
-                    if (!($event instanceof DeleteRowsDTO)) {
-                        $replicatorInterfaces = File::allFiles(App::path('ReplicatorInterceptors'));
+                    $interceptorsDirectory = App::path('ReplicatorInterceptors');
+                    if (!($event instanceof DeleteRowsDTO) && File::isDirectory($interceptorsDirectory)) {
+                        $replicatorInterfaces = File::allFiles($interceptorsDirectory);
 
                         foreach ($replicatorInterfaces as $interface) {
                             $className = 'ReplicatorInterceptors\\' . $interface->getFilenameWithoutExtension();
