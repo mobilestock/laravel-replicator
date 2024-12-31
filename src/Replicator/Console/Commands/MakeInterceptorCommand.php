@@ -20,9 +20,7 @@ class MakeInterceptorCommand extends Command
         if (!File::exists($directory)) {
             File::makeDirectory($directory);
             $this->info("Directory created: $directory");
-        }
-
-        if (File::exists($filePath)) {
+        } elseif (File::exists($filePath)) {
             $this->fail("The file $filePath already exists");
         }
 

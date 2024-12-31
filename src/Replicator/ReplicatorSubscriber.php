@@ -64,7 +64,7 @@ class ReplicatorSubscriber extends EventSubscribers
                     $columnMappings = array_flip($config['columns']);
                 }
 
-                $changedColumns = $this->checkChangedColumns($event, $columnMappings);
+                $changedColumns = $this->getChangedColuns($event, $columnMappings);
 
                 if (empty($changedColumns)) {
                     continue;
@@ -147,7 +147,7 @@ class ReplicatorSubscriber extends EventSubscribers
         }
     }
 
-    public function checkChangedColumns(RowsDTO $event, array $columnMappings): array
+    public function getChangedColuns(RowsDTO $event, array $columnMappings): array
     {
         $changedColumns = [];
 
@@ -178,7 +178,7 @@ class ReplicatorSubscriber extends EventSubscribers
 
     public function findNamespaceFromClass(string $className): ?string
     {
-        $autoloadPath = base_path('vendor/autoload.php');
+        $autoloadPath = App::basePath('vendor/autoload.php');
 
         $composerAutoload = require $autoloadPath;
 
