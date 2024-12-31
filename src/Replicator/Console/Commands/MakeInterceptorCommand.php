@@ -31,7 +31,9 @@ class MakeInterceptorCommand extends Command
 
 namespace App\\ReplicatorInterceptors;
 
-class $name
+use MobileStock\LaravelReplicator\AbstractInterceptor;
+
+class $name extends AbstractInterceptor
 {
 //
 }
