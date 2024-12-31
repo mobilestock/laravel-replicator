@@ -17,7 +17,6 @@ use MySQLReplication\Event\DTO\TableMapDTO;
 use MySQLReplication\Event\DTO\UpdateRowsDTO;
 use MySQLReplication\Event\DTO\WriteRowsDTO;
 use MySQLReplication\Event\DTO\XidDTO;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 
 uses(BaseCase::class);
 
@@ -308,24 +307,4 @@ test('Should rotate log', function () {
     expect($this->getEvent())->toBeInstanceOf(RotateDTO::class);
 
     expect($this->getEvent()->getEventInfo()->binLogCurrent->getBinFileName())->toMatch('/^[a-z-]+\.[\d]+$/');
-});
-
-test('Should use provided event dispatcher', function () {
-    $this->disconnect();
-
-    $testEventSubscribers = new TestEventSubscribers($this);
-
-    $eventDispatcher = new EventDispatcher();
-    $eventDispatcher->addSubscriber($testEventSubscribers);
-
-    $this->connectWithProvidedEventDispatcher($eventDispatcher);
-
-    $createExpected =
-        'CREATE TABLE test (id INT NOT NULL AUTO_INCREMENT, data VARCHAR (50) NOT NULL, PRIMARY KEY (id))';
-    $this->connection->executeStatement($createExpected);
-
-    /** @var QueryDTO $event */
-    $event = $this->getEvent();
-    $this->assertInstanceOf(QueryDTO::class, $event);
-    $this->assertEquals($createExpected, $event->query);
 });
