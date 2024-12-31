@@ -178,7 +178,7 @@ class ReplicatorSubscriber extends EventSubscribers
 
     public function findNamespaceFromClass(string $className): ?string
     {
-        $autoloadPath = base_path('vendor/autoload.php');
+        $autoloadPath = App::basePath('vendor/autoload.php');
 
         $composerAutoload = require $autoloadPath;
 
