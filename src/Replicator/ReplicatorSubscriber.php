@@ -93,8 +93,13 @@ class ReplicatorSubscriber extends EventSubscribers
                         $replicatorInterfaces = File::allFiles($interceptorsDirectory);
 
                         foreach ($replicatorInterfaces as $interface) {
-                            $className = 'ReplicatorInterceptors\\' . $interface->getFilenameWithoutExtension();
-                            $className = $this->findNamespaceFromClass($className);
+                            $file = App::path('ReplicatorInterceptors/' . $interface->getFilename());
+                            $fileContent = file_get_contents($file);
+
+                            preg_match('/^namespace\s+(.+?);$/sm', $fileContent, $matches);
+                            $namespace = $matches[1];
+
+                            $className = $namespace . '\\' . $interface->getFilenameWithoutExtension();
                             $methodName = Str::camel($nodePrimaryTable) . 'X' . Str::camel($nodeSecondaryTable);
 
                             if (method_exists($className, $methodName)) {
