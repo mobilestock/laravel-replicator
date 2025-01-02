@@ -175,24 +175,4 @@ class ReplicatorSubscriber extends EventSubscribers
 
         return $changedColumns;
     }
-
-    public function findNamespaceFromClass(string $className): ?string
-    {
-        $autoloadPath = App::basePath('vendor/autoload.php');
-
-        $composerAutoload = require $autoloadPath;
-
-        $namespaces = $composerAutoload->getPrefixesPsr4();
-
-        foreach ($namespaces as $namespace => $paths) {
-            foreach ($paths as $path) {
-                $classPath = $path . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, $className) . '.php';
-                if (file_exists($classPath)) {
-                    return $namespace . $className;
-                }
-            }
-        }
-
-        return null;
-    }
 }
