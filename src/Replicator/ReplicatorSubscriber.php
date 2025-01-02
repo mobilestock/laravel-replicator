@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use LogicException;
 use MobileStock\LaravelReplicator\Model\ReplicatorConfig;
 use MySQLReplication\Event\DTO\DeleteRowsDTO;
 use MySQLReplication\Event\DTO\EventDTO;
@@ -96,7 +97,9 @@ class ReplicatorSubscriber extends EventSubscribers
                             $file = App::path('ReplicatorInterceptors/' . $interface->getFilename());
                             $fileContent = file_get_contents($file);
 
-                            preg_match('/^namespace\s+(.+?);$/sm', $fileContent, $matches);
+                            if (!preg_match('/^namespace\s+(.+?);$/sm', $fileContent, $matches)) {
+                                throw new LogicException('Namespace not found in ' . $file);
+                            }
                             $namespace = $matches[1];
 
                             $className = $namespace . '\\' . $interface->getFilenameWithoutExtension();
