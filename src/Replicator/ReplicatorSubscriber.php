@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use LogicException;
 use MobileStock\LaravelReplicator\Model\ReplicatorConfig;
 use MySQLReplication\Event\DTO\DeleteRowsDTO;
 use MySQLReplication\Event\DTO\EventDTO;
@@ -93,12 +94,22 @@ class ReplicatorSubscriber extends EventSubscribers
                         $replicatorInterfaces = File::allFiles($interceptorsDirectory);
 
                         foreach ($replicatorInterfaces as $interface) {
-                            $className = 'ReplicatorInterceptors\\' . $interface->getFilenameWithoutExtension();
-                            $className = $this->findNamespaceFromClass($className);
+                            $file = App::path('ReplicatorInterceptors/' . $interface->getFilename());
+                            $fileContent = file_get_contents($file);
+
+                            if (!preg_match('/^namespace\s+(.+?);$/sm', $fileContent, $matches)) {
+                                throw new LogicException('Namespace not found in ' . $file);
+                            }
+                            $namespace = $matches[1];
+
+                            $className = $namespace . '\\' . $interface->getFilenameWithoutExtension();
                             $methodName = Str::camel($nodePrimaryTable) . 'X' . Str::camel($nodeSecondaryTable);
 
                             if (method_exists($className, $methodName)) {
                                 $interfaceInstance = App::make($className, ['event' => $event]);
+                                /**
+                                 * @issue https://github.com/mobilestock/backend/issues/731
+                                 */
                                 $changedColumns = $interfaceInstance->{$methodName}($rowData, $changedColumns);
                                 break;
                             }
@@ -174,25 +185,5 @@ class ReplicatorSubscriber extends EventSubscribers
         }
 
         return $changedColumns;
-    }
-
-    public function findNamespaceFromClass(string $className): ?string
-    {
-        $autoloadPath = App::basePath('vendor/autoload.php');
-
-        $composerAutoload = require $autoloadPath;
-
-        $namespaces = $composerAutoload->getPrefixesPsr4();
-
-        foreach ($namespaces as $namespace => $paths) {
-            foreach ($paths as $path) {
-                $classPath = $path . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, $className) . '.php';
-                if (file_exists($classPath)) {
-                    return $namespace . $className;
-                }
-            }
-        }
-
-        return null;
     }
 }
