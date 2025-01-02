@@ -107,6 +107,9 @@ class ReplicatorSubscriber extends EventSubscribers
 
                             if (method_exists($className, $methodName)) {
                                 $interfaceInstance = App::make($className, ['event' => $event]);
+                                /**
+                                 * @issue https://github.com/mobilestock/backend/issues/731
+                                 */
                                 $changedColumns = $interfaceInstance->{$methodName}($rowData, $changedColumns);
                                 break;
                             }
