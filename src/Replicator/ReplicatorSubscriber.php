@@ -40,7 +40,7 @@ class ReplicatorSubscriber extends EventSubscribers
         $database = $event->tableMap->database;
         $table = $event->tableMap->table;
 
-        echo '5';
+        echo "5 $database $table";
 
         foreach (Config::get('replicator') as $key => $config) {
             $replicatingTag = '/* isReplicating(' . gethostname() . '_' . $key . ') */';
