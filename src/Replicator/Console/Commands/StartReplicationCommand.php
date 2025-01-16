@@ -67,8 +67,8 @@ class StartReplicationCommand extends Command
                     json_encode(Config::get('database.connections.replicator-bridge')) .
                     PHP_EOL
             );
-            $this->info('Array unique databases:' . PHP_EOL . array_unique($databases) . PHP_EOL);
-            $this->info('Array unique tables:' . PHP_EOL . array_unique($tables) . PHP_EOL);
+            $this->info('Array unique databases:' . PHP_EOL . json_encode(array_unique($databases)) . PHP_EOL);
+            $this->info('Array unique tables:' . PHP_EOL . json_encode(array_unique($tables)) . PHP_EOL);
             $replication->run();
         } catch (BinLogException $exception) {
             if ($exception->getCode() === 1236 && !App::isProduction()) {
