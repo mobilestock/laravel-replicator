@@ -23,25 +23,33 @@ class ReplicatorSubscriber extends EventSubscribers
 
     public function allEvents(EventDTO $event): void
     {
+        echo '1';
         if ($event instanceof MariaDbAnnotateRowsDTO) {
+            echo "2 {$event->query}";
             $this->query = $event->query;
             return;
         }
+        echo '3';
         if (!$event instanceof RowsDTO) {
             return;
         }
+        echo '4';
 
         DB::setDefaultConnection('replicator-bridge');
 
         $database = $event->tableMap->database;
         $table = $event->tableMap->table;
 
+        echo '5';
+
         foreach (Config::get('replicator') as $key => $config) {
             $replicatingTag = '/* isReplicating(' . gethostname() . '_' . $key . ') */';
 
+            echo '6';
             if (str_contains($this->query, $replicatingTag)) {
                 continue;
             }
+            echo '7';
 
             $nodePrimaryDatabase = $config['node_primary']['database'];
             $nodePrimaryTable = $config['node_primary']['table'];
@@ -52,6 +60,7 @@ class ReplicatorSubscriber extends EventSubscribers
                 ($database === $nodePrimaryDatabase && $table === $nodePrimaryTable) ||
                 ($database === $nodeSecondaryDatabase && $table === $nodeSecondaryTable)
             ) {
+                echo '8';
                 if (
                     $event->tableMap->database === $nodePrimaryDatabase &&
                     $event->tableMap->table === $nodePrimaryTable
@@ -66,6 +75,7 @@ class ReplicatorSubscriber extends EventSubscribers
                 }
 
                 $changedColumns = $this->getChangedColuns($event, $columnMappings);
+                echo '9';
 
                 if (empty($changedColumns)) {
                     continue;
@@ -80,6 +90,7 @@ class ReplicatorSubscriber extends EventSubscribers
 
                 foreach ($event->values as $row) {
                     DB::beginTransaction();
+                    echo '10';
 
                     $rowData = $row;
 
@@ -88,24 +99,32 @@ class ReplicatorSubscriber extends EventSubscribers
                     } elseif ($event instanceof UpdateRowsDTO) {
                         $rowData = $row['after'];
                     }
+                    echo '11';
 
                     $interceptorsDirectory = App::path('ReplicatorInterceptors');
+                    echo '12';
                     if (!($event instanceof DeleteRowsDTO) && File::isDirectory($interceptorsDirectory)) {
+                        echo '13';
                         $replicatorInterfaces = File::allFiles($interceptorsDirectory);
 
                         foreach ($replicatorInterfaces as $interface) {
                             $file = App::path('ReplicatorInterceptors/' . $interface->getFilename());
                             $fileContent = file_get_contents($file);
+                            echo '14';
 
                             if (!preg_match('/^namespace\s+(.+?);$/sm', $fileContent, $matches)) {
                                 throw new LogicException('Namespace not found in ' . $file);
                             }
                             $namespace = $matches[1];
 
+                            echo '15';
+
                             $className = $namespace . '\\' . $interface->getFilenameWithoutExtension();
                             $methodName = Str::camel($nodePrimaryTable) . 'X' . Str::camel($nodeSecondaryTable);
+                            echo '16';
 
                             if (method_exists($className, $methodName)) {
+                                echo '17';
                                 $interfaceInstance = App::make($className, ['event' => $event]);
                                 /**
                                  * @issue https://github.com/mobilestock/backend/issues/731
@@ -116,6 +135,7 @@ class ReplicatorSubscriber extends EventSubscribers
                         }
                     }
 
+                    echo '18';
                     $changedColumns[$nodeSecondaryReferenceKey] = $rowData[$nodePrimaryReferenceKey];
 
                     $databaseHandler = new ReplicateSecondaryNodeHandler(
@@ -127,6 +147,7 @@ class ReplicatorSubscriber extends EventSubscribers
                         $columnMappings,
                         $changedColumns
                     );
+                    echo '19';
 
                     switch ($event::class) {
                         case UpdateRowsDTO::class:
@@ -141,9 +162,11 @@ class ReplicatorSubscriber extends EventSubscribers
                             $databaseHandler->delete();
                             break;
                     }
+                    echo '20';
                     DB::commit();
                 }
 
+                echo '21';
                 $binLogInfo = $event->getEventInfo()->binLogCurrent;
                 $replicationModel = new ReplicatorConfig();
                 $replicationModel->exists = true;
