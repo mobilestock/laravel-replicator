@@ -23,33 +23,34 @@ class ReplicatorSubscriber extends EventSubscribers
 
     public function allEvents(EventDTO $event): void
     {
-        echo '1';
+        $caminho = storage_path('logs/replicator.txt');
+        file_put_contents($caminho, '1', FILE_APPEND);
         if ($event instanceof MariaDbAnnotateRowsDTO) {
-            echo "2 {$event->query}";
+            file_put_contents($caminho, "2 {$event->query}", FILE_APPEND);
             $this->query = $event->query;
             return;
         }
-        echo '3';
+        file_put_contents($caminho, '3', FILE_APPEND);
         if (!$event instanceof RowsDTO) {
             return;
         }
-        echo '4';
+        file_put_contents($caminho, '4', FILE_APPEND);
 
         DB::setDefaultConnection('replicator-bridge');
 
         $database = $event->tableMap->database;
         $table = $event->tableMap->table;
 
-        echo "5 $database $table";
+        file_put_contents($caminho, "5 $database $table", FILE_APPEND);
 
         foreach (Config::get('replicator') as $key => $config) {
             $replicatingTag = '/* isReplicating(' . gethostname() . '_' . $key . ') */';
 
-            echo '6';
+            file_put_contents($caminho, '6', FILE_APPEND);
             if (str_contains($this->query, $replicatingTag)) {
                 continue;
             }
-            echo '7';
+            file_put_contents($caminho, '7', FILE_APPEND);
 
             $nodePrimaryDatabase = $config['node_primary']['database'];
             $nodePrimaryTable = $config['node_primary']['table'];
@@ -60,7 +61,7 @@ class ReplicatorSubscriber extends EventSubscribers
                 ($database === $nodePrimaryDatabase && $table === $nodePrimaryTable) ||
                 ($database === $nodeSecondaryDatabase && $table === $nodeSecondaryTable)
             ) {
-                echo '8';
+                file_put_contents($caminho, '8', FILE_APPEND);
                 if (
                     $event->tableMap->database === $nodePrimaryDatabase &&
                     $event->tableMap->table === $nodePrimaryTable
@@ -75,7 +76,7 @@ class ReplicatorSubscriber extends EventSubscribers
                 }
 
                 $changedColumns = $this->getChangedColuns($event, $columnMappings);
-                echo '9';
+                file_put_contents($caminho, '9', FILE_APPEND);
 
                 if (empty($changedColumns)) {
                     continue;
@@ -90,7 +91,7 @@ class ReplicatorSubscriber extends EventSubscribers
 
                 foreach ($event->values as $row) {
                     DB::beginTransaction();
-                    echo '10';
+                    file_put_contents($caminho, '10', FILE_APPEND);
 
                     $rowData = $row;
 
@@ -99,32 +100,32 @@ class ReplicatorSubscriber extends EventSubscribers
                     } elseif ($event instanceof UpdateRowsDTO) {
                         $rowData = $row['after'];
                     }
-                    echo '11';
+                    file_put_contents($caminho, '11', FILE_APPEND);
 
                     $interceptorsDirectory = App::path('ReplicatorInterceptors');
-                    echo '12';
+                    file_put_contents($caminho, '12', FILE_APPEND);
                     if (!($event instanceof DeleteRowsDTO) && File::isDirectory($interceptorsDirectory)) {
-                        echo '13';
+                        file_put_contents($caminho, '13', FILE_APPEND);
                         $replicatorInterfaces = File::allFiles($interceptorsDirectory);
 
                         foreach ($replicatorInterfaces as $interface) {
                             $file = App::path('ReplicatorInterceptors/' . $interface->getFilename());
                             $fileContent = file_get_contents($file);
-                            echo '14';
+                            file_put_contents($caminho, '14', FILE_APPEND);
 
                             if (!preg_match('/^namespace\s+(.+?);$/sm', $fileContent, $matches)) {
                                 throw new LogicException('Namespace not found in ' . $file);
                             }
                             $namespace = $matches[1];
 
-                            echo '15';
+                            file_put_contents($caminho, '15', FILE_APPEND);
 
                             $className = $namespace . '\\' . $interface->getFilenameWithoutExtension();
                             $methodName = Str::camel($nodePrimaryTable) . 'X' . Str::camel($nodeSecondaryTable);
-                            echo '16';
+                            file_put_contents($caminho, '16', FILE_APPEND);
 
                             if (method_exists($className, $methodName)) {
-                                echo '17';
+                                file_put_contents($caminho, '17', FILE_APPEND);
                                 $interfaceInstance = App::make($className, ['event' => $event]);
                                 /**
                                  * @issue https://github.com/mobilestock/backend/issues/731
@@ -135,7 +136,7 @@ class ReplicatorSubscriber extends EventSubscribers
                         }
                     }
 
-                    echo '18';
+                    file_put_contents($caminho, '18', FILE_APPEND);
                     $changedColumns[$nodeSecondaryReferenceKey] = $rowData[$nodePrimaryReferenceKey];
 
                     $databaseHandler = new ReplicateSecondaryNodeHandler(
@@ -147,7 +148,7 @@ class ReplicatorSubscriber extends EventSubscribers
                         $columnMappings,
                         $changedColumns
                     );
-                    echo '19';
+                    file_put_contents($caminho, '19', FILE_APPEND);
 
                     switch ($event::class) {
                         case UpdateRowsDTO::class:
@@ -162,11 +163,11 @@ class ReplicatorSubscriber extends EventSubscribers
                             $databaseHandler->delete();
                             break;
                     }
-                    echo '20';
+                    file_put_contents($caminho, '20', FILE_APPEND);
                     DB::commit();
                 }
 
-                echo '21';
+                file_put_contents($caminho, '21', FILE_APPEND);
                 $binLogInfo = $event->getEventInfo()->binLogCurrent;
                 $replicationModel = new ReplicatorConfig();
                 $replicationModel->exists = true;
