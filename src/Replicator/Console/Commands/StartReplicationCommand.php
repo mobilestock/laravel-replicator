@@ -61,6 +61,14 @@ class StartReplicationCommand extends Command
             $replication = new MySQLReplicationFactory($builder->build());
             $replication->registerSubscriber($registrationSubscriber);
             $this->info('Replication process has been started');
+            $this->info(
+                'Replicator bridge:' .
+                    PHP_EOL .
+                    json_encode(Config::get('database.connections.replicator-bridge')) .
+                    PHP_EOL
+            );
+            $this->info('Array unique databases:' . PHP_EOL . array_unique($databases) . PHP_EOL);
+            $this->info('Array unique tables:' . PHP_EOL . array_unique($tables) . PHP_EOL);
             $replication->run();
         } catch (BinLogException $exception) {
             if ($exception->getCode() === 1236 && !App::isProduction()) {
